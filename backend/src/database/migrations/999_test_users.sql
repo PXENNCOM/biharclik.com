@@ -37,13 +37,14 @@ VALUES (
 SET @student_user_id = LAST_INSERT_ID();
 
 INSERT INTO students (
-    user_id, first_name, last_name, tc_no, birth_date,
+    user_id, first_name, last_name, department, tc_no, birth_date,
     iban, address, university, admin_approved,
     kvkk_accepted, terms_accepted
 ) VALUES (
     @student_user_id,
     'Test',
     'Öğrenci',
+    'Bilgisayar Mühendisliği',  -- ⭐ EKLENDİ
     '12345678901',
     '2000-01-15',
     'TR123456789012345678901234',
