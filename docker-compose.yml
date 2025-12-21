@@ -1,0 +1,128 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: biharclik-mysql
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password --default-time-zone=+03:00
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      # İlk kurulumda SQL dosyalarını import et
+      - ./backend/src/database/migrations:/docker-entrypoint-initdb.d:ro
+    networks:
+      - biharclik-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: biharclik-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DB_HOST: mysql
+      DB_USER: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      DB_NAME: ${MYSQL_DATABASE}
+      DB_PORT: 3306
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_ACCESS_EXPIRY: 15m
+      JWT_REFRESH_EXPIRY: 7d
+      MAX_FILE_SIZE: 5242880
+      UPLOAD_PATH: ./uploads
+      RATE_LIMIT_WINDOW: 15
+      RATE_LIMIT_MAX_REQUESTS: 100
+    volumes:
+      - backend_uploads:/app/uploads
+      # Firebase credentials
+      - ./backend/src/config/serviceAccountKey.json:/app/src/config/serviceAccountKey.json:ro
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - biharclik-network
+    expose:
+      - "3001"
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: https://api.biharçlık.com/api
+    container_name: biharclik-frontend
+    restart: unless-stopped
+    networks:
+      - biharclik-network
+    expose:
+      - "80"
+
+  # phpMyAdmin
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: biharclik-phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      UPLOAD_LIMIT: 50M
+    depends_on:
+      - mysql
+    networks:
+      - biharclik-network
+    expose:
+      - "80"
+
+  # Nginx Reverse Proxy + SSL
+  nginx:
+    image: nginx:alpine
+    container_name: biharclik-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+    depends_on:
+      - frontend
+      - backend
+      - phpmyadmin
+    networks:
+      - biharclik-network
+
+  # Certbot for SSL
+  certbot:
+    image: certbot/certbot:latest
+    container_name: biharclik-certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+networks:
+  biharclik-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  backend_uploads:
