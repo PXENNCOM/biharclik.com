@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../../services/authService';
+import { PhoneVerificationModal } from '../../components/common/PhoneVerificationModal'; // ← EKLE
 
 // ✨ BoxIcons
 import { 
@@ -18,12 +19,12 @@ import {
   BiBriefcase
 } from 'react-icons/bi';
 
-// 🖼️ Görseller (Login ile aynı görseli veya farklı bir kurye görselini kullanabilirsiniz)
+// 🖼️ Görseller
 import LogoImage from '../../assets/yellow_logo.png'; 
 import HeroImage from '../../assets/login-hero.png'; 
 
 export const SenderRegisterPage = () => {
-  const [accountType, setAccountType] = useState('individual'); // 'individual' or 'corporate'
+  const [accountType, setAccountType] = useState('individual');
   const [formData, setFormData] = useState({
     email: '',
     phone: '',
@@ -41,6 +42,10 @@ export const SenderRegisterPage = () => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  
+  // ← TELEFON DOĞRULAMA STATE'LERİ EKLE
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
 
   const navigate = useNavigate();
 
@@ -55,6 +60,12 @@ export const SenderRegisterPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    // ← TELEFON DOĞRULAMA KONTROLÜ EKLE
+    if (!phoneVerified) {
+      setError('Lütfen telefon numaranızı doğrulayın');
+      return;
+    }
 
     if (formData.password !== formData.password_confirm) {
       setError('Şifreler eşleşmiyor');
@@ -92,7 +103,6 @@ export const SenderRegisterPage = () => {
       }
 
       const response = await authService.registerSender(data);
-      // Kayıt sonrası logic (Token kaydetme vs.)
       const { user, access_token, refresh_token } = response.data;
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('access_token', access_token);
@@ -109,18 +119,14 @@ export const SenderRegisterPage = () => {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-white font-sans text-gray-900">
       
-      {/* --- SOL TARAF: MARKA & GÖRSEL --- */}
+      {/* SOL TARAF */}
        <div className="lg:w-5/12 bg-gray-900 text-white flex flex-col relative overflow-hidden min-h-[200px] lg:min-h-screen lg:fixed lg:left-0 lg:top-0 lg:h-full z-10">
-              
-              {/* Görsel ve Karartma */}
               <img 
                 src={HeroImage} 
                 alt="Öğrenci Kurye" 
                 className="absolute inset-0 w-full h-full object-cover z-0"
               />
               <div className="absolute inset-0 bg-gray-900/85 z-10"></div>
-      
-              {/* Logo Ortalanmış */}
               <div className="relative z-20 flex-1 flex items-center justify-center p-12">
                 <img 
                   src={LogoImage} 
@@ -128,20 +134,16 @@ export const SenderRegisterPage = () => {
                   className="w-40 h-auto object-contain drop-shadow-2xl"
                 />
               </div>
-      
-              {/* Footer */}
              <div className="relative z-20 text-sm text-gray-400 font-medium text-center pb-8">
                 © 2025 Biharçlık. Tüm hakları saklıdır.
               </div>
             </div>
 
             
-      {/* --- SAĞ TARAF: FORM ALANI --- */}
-      {/* Sol taraf fixed olduğu için sağ tarafa margin-left ekliyoruz (lg:ml-[41.666%]) */}
+      {/* SAĞ TARAF */}
       <div className="lg:w-7/12 lg:ml-[41.666%] w-full bg-white min-h-screen flex items-center justify-center py-12 px-6 sm:px-12">
         <div className="w-full max-w-2xl">
             
-            {/* Mobil Header (Sadece mobilde görünür) */}
             <div className="lg:hidden text-center mb-8">
                  <img src={LogoImage} alt="Biharçlık Logo" className="h-10 w-auto mx-auto mb-4" />
             </div>
@@ -161,7 +163,7 @@ export const SenderRegisterPage = () => {
                     </div>
                 )}
 
-                {/* 1. HESAP TİPİ SEÇİMİ (Kart Tasarımı) */}
+                {/* HESAP TİPİ */}
                 <div>
                     <label className="block text-sm font-bold text-gray-700 mb-3 ml-1">Hesap Türü</label>
                     <div className="grid grid-cols-2 gap-4">
@@ -203,10 +205,9 @@ export const SenderRegisterPage = () => {
                     </div>
                 </div>
 
-                {/* 2. KİMLİK / FİRMA BİLGİLERİ */}
+                {/* KİMLİK / FİRMA BİLGİLERİ */}
                 <div className="space-y-5">
                     
-                    {/* BİREYSEL FORM */}
                     {accountType === 'individual' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <InputGroup icon={<BiUser />} label="Ad" name="first_name" value={formData.first_name} onChange={handleChange} placeholder="Adınız" />
@@ -217,7 +218,6 @@ export const SenderRegisterPage = () => {
                         </div>
                     )}
 
-                    {/* KURUMSAL FORM */}
                     {accountType === 'corporate' && (
                         <div className="space-y-5">
                             <InputGroup icon={<BiBuilding />} label="Firma Adı" name="company_name" value={formData.company_name} onChange={handleChange} placeholder="Şirket Ünvanı A.Ş." />
@@ -229,12 +229,39 @@ export const SenderRegisterPage = () => {
                     )}
                 </div>
 
-                {/* 3. İLETİŞİM & ADRES */}
+                {/* İLETİŞİM & TELEFON DOĞRULAMA */}
                 <div className="space-y-5 pt-4 border-t border-gray-100">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <InputGroup icon={<BiEnvelope />} label="E-posta" name="email" type="email" value={formData.email} onChange={handleChange} placeholder="ornek@email.com" />
                         <InputGroup icon={<BiPhone />} label="Telefon" name="phone" type="tel" value={formData.phone} onChange={handleChange} placeholder="0555..." />
                     </div>
+
+                    {/* ← TELEFON DOĞRULAMA BUTONU EKLE */}
+                    <div>
+                      {phoneVerified ? (
+                        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl flex items-center gap-2 text-sm font-bold">
+                          <BiCheckCircle size={20} />
+                          Telefon numarası doğrulandı.
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!formData.phone || formData.phone.length < 10) {
+                              setError('Lütfen geçerli bir telefon numarası girin');
+                              return;
+                            }
+                            setError('');
+                            setShowPhoneModal(true);
+                          }}
+                          className="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-3 rounded-xl border border-blue-200 transition flex items-center justify-center gap-2 text-sm"
+                        >
+                          <BiPhone size={18} />
+                          Telefonu Doğrula
+                        </button>
+                      )}
+                    </div>
+
                     <div className="group">
                          <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">Fatura Adresi</label>
                          <div className="relative">
@@ -252,7 +279,7 @@ export const SenderRegisterPage = () => {
                     </div>
                 </div>
 
-                {/* 4. GÜVENLİK */}
+                {/* GÜVENLİK */}
                 <div className="space-y-5 pt-4 border-t border-gray-100">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <InputGroup icon={<BiLockAlt />} label="Şifre" name="password" type="password" value={formData.password} onChange={handleChange} placeholder="******" />
@@ -305,11 +332,22 @@ export const SenderRegisterPage = () => {
             </form>
         </div>
       </div>
+
+      {/* ← TELEFON DOĞRULAMA MODAL EKLE */}
+      <PhoneVerificationModal
+        isOpen={showPhoneModal}
+        phoneNumber={formData.phone}
+        onVerified={() => {
+          setPhoneVerified(true);
+          setShowPhoneModal(false);
+        }}
+        onClose={() => setShowPhoneModal(false)}
+      />
     </div>
   );
 };
 
-// --- YARDIMCI INPUT BİLEŞENİ (YENİ STİL) ---
+// INPUT COMPONENT
 const InputGroup = ({ icon, label, name, type = "text", value, onChange, placeholder, maxLength }) => (
     <div className="group">
         <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">{label}</label>
