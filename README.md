@@ -1,2 +1,2 @@
-# bihar-lik.com
+# biharclik.com
 # biharclik.com
