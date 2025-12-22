@@ -21,7 +21,6 @@ const testDatabaseConnection = async () => {
   }
 };
 
-// Sunucuyu başlat
 const startServer = async () => {
   try {
     console.log('🔍 Checking database...');
