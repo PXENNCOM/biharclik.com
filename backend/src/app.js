@@ -9,23 +9,19 @@ const logger = require('./shared/utils/logger.util');
 
 const app = express();
 
-
-
-// Security middleware
-app.use(cors({
-  origin: ['https://biharclik.com', 'https://www.biharclik.com'],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range'],
-  maxAge: 600
-}));
-
-app.options('*', cors());
-app.use(helmet());
 app.set('trust proxy', 1);
 
 
+// Security middleware
+app.use(helmet());
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://biharclik.com', 'https://www.biharclik.com']  
+    : '*',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // Rate limiting (sadece production'da)
 if (process.env.NODE_ENV === 'production') {
