@@ -11,9 +11,12 @@ const app = express();
 
 app.set('trust proxy', 1);
 
+// Security middleware - Helmet'i configure et
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }, // ← YENİ EKLENEN
+  contentSecurityPolicy: false // Development için kapatıyoruz
+}));
 
-// Security middleware
-app.use(helmet());
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? ['https://biharclik.com', 'https://www.biharclik.com']  
@@ -35,7 +38,6 @@ if (process.env.NODE_ENV === 'production') {
   });
   app.use('/api/', limiter);
 } else {
-  // Development'da rate limiting yok
   logger.info('Rate limiting disabled in development mode');
 }
 
@@ -43,8 +45,13 @@ if (process.env.NODE_ENV === 'production') {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Static files (uploads klasörü)
-app.use('/uploads', express.static('uploads'));
+// Static files (uploads klasörü) - CORS eklendi
+app.use('/uploads', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  next();
+}, express.static('uploads'));
 
 // Request logging
 app.use((req, res, next) => {

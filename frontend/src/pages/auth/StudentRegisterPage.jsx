@@ -45,6 +45,7 @@ export const StudentRegisterPage = () => {
     terms_accepted: false,
   });
   const [studentDocument, setStudentDocument] = useState(null);
+  const [profilePhoto, setProfilePhoto] = useState(null); // ← YENİ
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
@@ -81,40 +82,65 @@ export const StudentRegisterPage = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleProfilePhotoChange = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Dosya boyutu 5MB\'dan büyük olamaz');
+      e.target.value = '';
+      return;
+    }
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      setError('Sadece JPG, PNG ve WEBP dosyaları yüklenebilir');
+      e.target.value = '';
+      return;
+    }
+    setProfilePhoto(file);
     setError('');
+  }
+};
 
-    if (!phoneVerified) {
-      setError('Lütfen telefon numaranızı doğrulayın');
-      return;
-    }
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError('');
 
-    if (formData.password !== formData.password_confirm) {
-      setError('Şifreler eşleşmiyor');
-      return;
-    }
+  if (!phoneVerified) {
+    setError('Lütfen telefon numaranızı doğrulayın');
+    return;
+  }
 
-    if (!studentDocument) {
-      setError('Öğrenci belgesi zorunludur');
-      return;
-    }
+  if (formData.password !== formData.password_confirm) {
+    setError('Şifreler eşleşmiyor');
+    return;
+  }
 
-    if (!formData.kvkk_accepted || !formData.terms_accepted) {
-      setError('KVKK ve kullanım koşullarını kabul etmelisiniz');
-      return;
-    }
+  if (!studentDocument) {
+    setError('Öğrenci belgesi zorunludur');
+    return;
+  }
 
-    setLoading(true);
+  if (!profilePhoto) { // ← YENİ
+    setError('Profil fotoğrafı zorunludur');
+    return;
+  }
 
-    try {
-      const data = new FormData();
-      Object.keys(formData).forEach(key => {
-        data.append(key, formData[key]);
-      });
-      data.append('student_document', studentDocument);
+  if (!formData.kvkk_accepted || !formData.terms_accepted) {
+    setError('KVKK ve kullanım koşullarını kabul etmelisiniz');
+    return;
+  }
 
-      const response = await authService.registerStudent(data);
+  setLoading(true);
+
+  try {
+    const data = new FormData();
+    Object.keys(formData).forEach(key => {
+      data.append(key, formData[key]);
+    });
+    data.append('student_document', studentDocument);
+    data.append('profile_photo', profilePhoto); // ← YENİ
+
+    const response = await authService.registerStudent(data);
       const { user, access_token, refresh_token } = response.data;
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('access_token', access_token);
@@ -183,6 +209,38 @@ export const StudentRegisterPage = () => {
                     </div>
                 )}
 
+                <section>
+    
+    <div className="group">
+        <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">Profil Fotoğrafın</label>
+        <div className={`border-2 border-dashed rounded-2xl p-6 text-center transition-all cursor-pointer group-hover:border-yellow-400 ${profilePhoto ? 'border-green-400 bg-green-50' : 'border-gray-300 bg-white hover:bg-gray-50'}`}>
+             <input
+                type="file"
+                accept="image/jpeg,image/jpg,image/png,image/webp"
+                onChange={handleProfilePhotoChange}
+                className="hidden"
+                id="profile_photo"
+                required
+            />
+            <label htmlFor="profile_photo" className="cursor-pointer w-full h-full block">
+                {profilePhoto ? (
+                    <div className="flex flex-col items-center text-green-700">
+                        <BiCheckCircle size={32} className="mb-2" />
+                        <span className="font-bold text-sm">{profilePhoto.name}</span>
+                        <span className="text-xs opacity-75 mt-1">Fotoğraf yüklendi</span>
+                    </div>
+                ) : (
+                     <div className="flex flex-col items-center text-gray-400 group-hover:text-yellow-600 transition-colors">
+                        <BiUser size={32} className="mb-2" />
+                        <span className="font-bold text-sm text-gray-700 group-hover:text-yellow-700">Profil Fotoğrafı Yükle</span>
+                        <span className="text-xs text-gray-400 mt-1">JPG, PNG veya WEBP (Max 5MB)</span>
+                    </div>
+                )}
+            </label>
+        </div>
+    </div>
+</section>
+
                 {/* 1. KİŞİSEL BİLGİLER */}
                 <section>
                     <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2">
@@ -235,6 +293,8 @@ export const StudentRegisterPage = () => {
                         <InputGroup icon={<BiCheckCircle />} label="Şifre Tekrar" name="password_confirm" type="password" value={formData.password_confirm} onChange={handleChange} placeholder="Şifrenizi doğrulayın" />
                      </div>
                 </section>
+
+                
 
                 {/* 3. EĞİTİM & BELGE */}
                 <section>

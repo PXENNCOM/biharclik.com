@@ -2,33 +2,49 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Klasör oluştur
-const uploadDir = './uploads/students';
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+// Klasörleri oluştur
+const studentDocDir = './uploads/students';
+const profilePhotoDir = './uploads/profile-photos';
+
+[studentDocDir, profilePhotoDir].forEach(dir => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+});
 
 // Storage konfigürasyonu
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, uploadDir);
+    // Field name'e göre klasör seç
+    const dest = file.fieldname === 'profile_photo' ? profilePhotoDir : studentDocDir;
+    cb(null, dest);
   },
   filename: (req, file, cb) => {
-    // Dosya adı: timestamp_randomstring.extension
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const ext = path.extname(file.originalname);
-    cb(null, 'student-doc-' + uniqueSuffix + ext);
+    const prefix = file.fieldname === 'profile_photo' ? 'profile-' : 'student-doc-';
+    cb(null, prefix + uniqueSuffix + ext);
   }
 });
 
 // Dosya filtresi
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
-  
-  if (allowedTypes.includes(file.mimetype)) {
-    cb(null, true);
+  if (file.fieldname === 'profile_photo') {
+    // Profil fotoğrafı sadece resim
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Profil fotoğrafı sadece JPG, PNG veya WEBP olabilir'), false);
+    }
   } else {
-    cb(new Error('Sadece JPG, PNG ve PDF dosyaları yüklenebilir'), false);
+    // Öğrenci belgesi resim veya PDF
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Sadece JPG, PNG ve PDF dosyaları yüklenebilir'), false);
+    }
   }
 };
 

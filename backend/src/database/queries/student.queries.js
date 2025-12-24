@@ -44,19 +44,21 @@ class StudentQueries {
   }
 
   static async getStudentFullInfo(userId) {
-    const sql = `
-      SELECT 
-        u.id, u.email, u.phone, u.role, u.email_verified, u.phone_verified,
-        s.first_name, s.last_name, s.tc_no, s.birth_date, s.iban,
-        s.address, s.university, s.department, s.student_document_url, s.admin_approved,
-        s.created_at
-      FROM users u
-      INNER JOIN students s ON u.id = s.user_id
-      WHERE u.id = ?
-    `;
-    const results = await db.query(sql, [userId]);
-    return results[0];
-  }
+  const sql = `
+    SELECT 
+      u.id, u.email, u.phone, u.role, u.email_verified, u.phone_verified,
+      s.first_name, s.last_name, s.tc_no, s.birth_date, s.iban,
+      s.address, s.university, s.department, s.student_document_url,
+      s.profile_photo,
+      s.admin_approved,
+      s.created_at
+    FROM users u
+    INNER JOIN students s ON u.id = s.user_id
+    WHERE u.id = ?
+  `;
+  const results = await db.query(sql, [userId]);
+  return results[0];
+}
 
   // ADMIN - TÜM ÖĞRENCİLER (İstatistiklerle)
   static async findAllWithStats(filters = {}) {

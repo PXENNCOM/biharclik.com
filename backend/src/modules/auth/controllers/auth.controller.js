@@ -8,44 +8,54 @@ const SmsService = require('../services/sms.service');
 class AuthController {
   // ÖĞRENCİ KAYIT
   static async registerStudent(req, res, next) {
-    try {
-      // Dosya yüklendi mi kontrol et
-      if (!req.file) {
-        return ApiResponse.error(res, 'Öğrenci belgesi zorunludur', 400);
-      }
-
-      // Dosya yolunu ekle
-      const studentData = {
-        ...req.body,
-        student_document_url: `/uploads/students/${req.file.filename}`
-      };
-
-      const result = await AuthService.registerStudent(studentData);
-      
-      logger.info('Student registered successfully', { userId: result.user.id });
-      
-      return ApiResponse.success(
-        res,
-        'Kayıt başarılı! Hesabınız admin onayı sonrası aktif olacak.',
-        result,
-        201
-      );
-    } catch (error) {
-      logger.error('Student registration error:', error);
-      
-      // Hata olursa yüklenen dosyayı sil
-      if (req.file) {
-        const fs = require('fs');
-        const path = require('path');
-        const filePath = path.join('./uploads/students', req.file.filename);
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
-        }
-      }
-      
-      next(error);
+  try {
+    // Her iki dosya da zorunlu
+    if (!req.files || !req.files.student_document) {
+      return ApiResponse.error(res, 'Öğrenci belgesi zorunludur', 400);
     }
+    
+    if (!req.files || !req.files.profile_photo) {
+      return ApiResponse.error(res, 'Profil fotoğrafı zorunludur', 400);
+    }
+
+    // Dosya yollarını ekle
+    const studentData = {
+      ...req.body,
+      student_document_url: `/uploads/students/${req.files.student_document[0].filename}`,
+      profile_photo: `/uploads/profile-photos/${req.files.profile_photo[0].filename}`
+    };
+
+    const result = await AuthService.registerStudent(studentData);
+    
+    logger.info('Student registered successfully', { userId: result.user.id });
+    
+    return ApiResponse.success(
+      res,
+      'Kayıt başarılı! Hesabınız admin onayı sonrası aktif olacak.',
+      result,
+      201
+    );
+  } catch (error) {
+    logger.error('Student registration error:', error);
+    
+    // Hata olursa yüklenen dosyaları sil
+    if (req.files) {
+      const fs = require('fs');
+      const path = require('path');
+      
+      Object.values(req.files).forEach(fileArray => {
+        fileArray.forEach(file => {
+          const filePath = path.join('./uploads', file.destination.split('/').pop(), file.filename);
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+          }
+        });
+      });
+    }
+    
+    next(error);
   }
+}
 
   // GÖNDERİCİ KAYIT
   static async registerSender(req, res, next) {

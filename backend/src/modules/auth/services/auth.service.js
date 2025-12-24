@@ -48,14 +48,13 @@ class AuthService {
 
       const userId = userResult.insertId;
 
-      // Student detayları kaydet
       await connection.query(`
-        INSERT INTO students (
-          user_id, first_name, last_name, tc_no, birth_date,
-          iban, address, university, department, student_document_url,
-          kvkk_accepted, terms_accepted
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [
+  INSERT INTO students (
+    user_id, first_name, last_name, tc_no, birth_date,
+    iban, address, university, department, student_document_url,
+    profile_photo, kvkk_accepted, terms_accepted
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+`, [
         userId,
         data.first_name,
         data.last_name,
@@ -65,7 +64,8 @@ class AuthService {
         data.address,
         data.university,
         data.department,
-        data.student_document_url || null,
+        data.student_document_url,
+        data.profile_photo, 
         data.kvkk_accepted,
         data.terms_accepted
       ]);
@@ -232,7 +232,7 @@ class AuthService {
   static async login(identifier, password) {
     // Kullanıcıyı bul (email veya telefon ile)
     const user = await UserQueries.findByEmailOrPhone(identifier);
-    
+
     if (!user) {
       throw new Error('E-posta/telefon veya şifre hatalı');
     }

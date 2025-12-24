@@ -36,6 +36,7 @@ export const StudentDashboard = () => {
   const [availableJobs, setAvailableJobs] = useState([]);
   const [myJobs, setMyJobs] = useState([]);
   const [history, setHistory] = useState(null);
+  const [profileData, setProfileData] = useState(null); // ← YENİ
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -56,28 +57,31 @@ export const StudentDashboard = () => {
   }, []);
 
   const fetchData = async () => {
-    try {
-      setLoading(true);
-      const [historyRes, availableRes, myJobsRes] = await Promise.all([
-        userService.getMyHistory(),
-        deliveryService.getAvailableJobs({ limit: 50 }),
-        deliveryService.getMyJobs()
-      ]);
+  try {
+    setLoading(true);
+    const [historyRes, availableRes, myJobsRes, profileRes] = await Promise.all([
+      userService.getMyHistory(),
+      deliveryService.getAvailableJobs({ limit: 50 }),
+      deliveryService.getMyJobs(),
+      userService.getMyProfile() // ← YENİ
+    ]);
 
-      setHistory(historyRes.data.data || historyRes.data);
+    setHistory(historyRes.data.data || historyRes.data);
 
-      const availableData = availableRes.data.data || availableRes.data;
-      setAvailableJobs(availableData.jobs || availableData.deliveries || []);
+    const availableData = availableRes.data.data || availableRes.data;
+    setAvailableJobs(availableData.jobs || availableData.deliveries || []);
 
-      const myJobsData = myJobsRes.data.data || myJobsRes.data;
-      setMyJobs(myJobsData.jobs || myJobsData.deliveries || []);
+    const myJobsData = myJobsRes.data.data || myJobsRes.data;
+    setMyJobs(myJobsData.jobs || myJobsData.deliveries || []);
 
-    } catch (err) {
-      setError(err.response?.data?.message || 'Veriler yüklenirken bir hata oluştu.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    setProfileData(profileRes.data); // ← YENİ
+
+  } catch (err) {
+    setError(err.response?.data?.message || 'Veriler yüklenirken bir hata oluştu.');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const showStatus = (type, title, message) => setPopup({ isOpen: true, type, title, message });
 
@@ -166,7 +170,7 @@ export const StudentDashboard = () => {
       <ModernHeader
         title={`${user?.name || 'Öğrenci'} 👋`}
         subtitle="Hoş geldin,"
-        user={user}
+        user={profileData} 
         onLogout={() => { logout(); navigate('/login'); }}
         onProfileClick={() => navigate('/profile')}
         showBackButton={false}

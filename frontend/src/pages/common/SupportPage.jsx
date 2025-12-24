@@ -5,8 +5,9 @@ import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { supportService } from '../../services/supportService';
 import { deliveryService } from '../../services/deliveryService';
+import { userService } from '../../services/userService'; 
 
-// Components
+
 import { ModernHeader } from './ModernHeader';
 import { StatusModal } from '../../components/common/ActionModals';
 
@@ -33,6 +34,7 @@ export const SupportPage = () => {
   const [tickets, setTickets] = useState([]);
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [myDeliveries, setMyDeliveries] = useState([]);
+  const [profileData, setProfileData] = useState(null); // ← YENİ
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
@@ -58,6 +60,7 @@ export const SupportPage = () => {
   useEffect(() => {
     fetchTickets();
     fetchMyDeliveries();
+    fetchProfile();
   }, []);
 
   const fetchTickets = async () => {
@@ -72,6 +75,15 @@ export const SupportPage = () => {
       setLoading(false);
     }
   };
+
+  const fetchProfile = async () => {
+  try {
+    const response = await userService.getMyProfile();
+    setProfileData(response.data);
+  } catch (err) {
+    console.error('Profile fetch error:', err);
+  }
+};
 
   const fetchMyDeliveries = async () => {
     try {
@@ -207,22 +219,21 @@ export const SupportPage = () => {
   // Detay Görünümü
   if (selectedTicket) {
     return (
-      <div className="min-h-screen bg-gray-50 pb-24 md:pb-10">
-        <StatusModal 
-          isOpen={popup.isOpen} 
-          {...popup} 
-          onClose={() => setPopup({ ...popup, isOpen: false })} 
-        />
+     <div className="min-h-screen bg-gray-50 pb-24 md:pb-10">
+    <StatusModal 
+      isOpen={popup.isOpen} 
+      {...popup} 
+      onClose={() => setPopup({ ...popup, isOpen: false })} 
+    />
 
-        <ModernHeader 
-          title="Destek Talebi"
-          user={user}
-          onLogout={() => { logout(); navigate('/login'); }}
-          onProfileClick={() => navigate('/profile')}
-          showBackButton={true}
-          onBack={() => setSelectedTicket(null)}
-        />
-
+    <ModernHeader 
+      title="Destek"
+      user={profileData} // ← DEĞİŞTİRDİM (user yerine profileData)
+      onLogout={() => { logout(); navigate('/login'); }}
+      onProfileClick={() => navigate('/profile')}
+      showBackButton={true}
+      onBack={() => navigate(-1)}
+    />
         {/* Desktop: 2 Kolon, Mobile: 1 Kolon */}
         <main className="max-w-7xl mx-auto px-4 md:px-6 pt-4 md:pt-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -346,19 +357,19 @@ export const SupportPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 pb-24 md:pb-10">
       <StatusModal 
-        isOpen={popup.isOpen} 
-        {...popup} 
-        onClose={() => setPopup({ ...popup, isOpen: false })} 
-      />
+      isOpen={popup.isOpen} 
+      {...popup} 
+      onClose={() => setPopup({ ...popup, isOpen: false })} 
+    />
 
-      <ModernHeader 
-        title="Destek"
-        user={user}
-        onLogout={() => { logout(); navigate('/login'); }}
-        onProfileClick={() => navigate('/profile')}
-        showBackButton={true}
-        onBack={() => navigate(-1)}
-      />
+    <ModernHeader 
+      title="Destek"
+      user={profileData} // ← DEĞİŞTİRDİM (user yerine profileData)
+      onLogout={() => { logout(); navigate('/login'); }}
+      onProfileClick={() => navigate('/profile')}
+      showBackButton={true}
+      onBack={() => navigate(-1)}
+    />
 
       <main className="max-w-7xl mx-auto px-4 md:px-6 pt-4 md:pt-6">
         {error && (

@@ -9,7 +9,10 @@ const { upload, handleMulterError } = require('../../../shared/middleware/upload
 // Public routes (herkes erişebilir)
 router.post(
   '/register/student',
-  upload.single('student_document'),
+  upload.fields([
+    { name: 'student_document', maxCount: 1 },
+    { name: 'profile_photo', maxCount: 1 }
+  ]),
   handleMulterError,
   validate(AuthValidator.studentRegister),
   AuthController.registerStudent

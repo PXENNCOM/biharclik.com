@@ -29,5 +29,3 @@ coverage/
 dist/
 build/
 
-# Firebase
-src/config/serviceAccountKey.json
