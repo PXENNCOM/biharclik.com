@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../../services/authService';
 import { PhoneVerificationModal } from '../../components/common/PhoneVerificationModal';
+import { KvkkModal } from '../../components/common/KvkkModal';
+
 
 // ✨ BoxIcons
 import { 
@@ -45,7 +47,9 @@ export const StudentRegisterPage = () => {
     terms_accepted: false,
   });
   const [studentDocument, setStudentDocument] = useState(null);
-  const [profilePhoto, setProfilePhoto] = useState(null); // ← YENİ
+  const [profilePhoto, setProfilePhoto] = useState(null); 
+  const [showKvkkModal, setShowKvkkModal] = useState(false);
+  const [kvkkModalType, setKvkkModalType] = useState('aydinlatma');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
@@ -362,23 +366,73 @@ export const StudentRegisterPage = () => {
                     </div>
                 </section>
 
-                {/* ONAYLAR */}
-                <div className="space-y-3 pt-4">
-                    <label className="flex items-start cursor-pointer group select-none">
-                        <div className="relative flex items-center mt-0.5">
-                            <input type="checkbox" name="kvkk_accepted" required checked={formData.kvkk_accepted} onChange={handleChange} className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-300 transition-all checked:border-yellow-400 checked:bg-yellow-400 hover:border-yellow-400" />
-                             <BiCheckCircle className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100" size={14} />
-                        </div>
-                        <span className="ml-3 text-sm text-gray-600 group-hover:text-gray-900 transition font-medium">KVKK metnini okudum ve kabul ediyorum.</span>
-                    </label>
-                     <label className="flex items-start cursor-pointer group select-none">
-                         <div className="relative flex items-center mt-0.5">
-                            <input type="checkbox" name="terms_accepted" required checked={formData.terms_accepted} onChange={handleChange} className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-300 transition-all checked:border-yellow-400 checked:bg-yellow-400 hover:border-yellow-400" />
-                             <BiCheckCircle className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100" size={14} />
-                        </div>
-                        <span className="ml-3 text-sm text-gray-600 group-hover:text-gray-900 transition font-medium">Kullanım koşullarını okudum ve kabul ediyorum.</span>
-                    </label>
-                </div>
+               {/* ONAYLAR */}
+<div className="space-y-3 pt-4">
+  <label className="flex items-start cursor-pointer group select-none">
+    <div className="relative flex items-center mt-0.5">
+      <input 
+        type="checkbox" 
+        name="kvkk_accepted" 
+        required 
+        checked={formData.kvkk_accepted} 
+        onChange={handleChange} 
+        className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-300 transition-all checked:border-yellow-400 checked:bg-yellow-400 hover:border-yellow-400" 
+      />
+      <BiCheckCircle className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100" size={14} />
+    </div>
+    <span className="ml-3 text-sm text-gray-600 group-hover:text-gray-900 transition font-medium">
+      <button
+        type="button"
+        onClick={() => {
+          setKvkkModalType('aydinlatma');
+          setShowKvkkModal(true);
+        }}
+        className="text-blue-600 hover:text-blue-700 font-bold underline"
+      >
+        Aydınlatma Metni
+      </button>
+      'ni ve 
+      <button
+        type="button"
+        onClick={() => {
+          setKvkkModalType('politika');
+          setShowKvkkModal(true);
+        }}
+        className="text-blue-600 hover:text-blue-700 font-bold underline"
+      >
+        KVKK Politikası
+      </button>
+      'nı okudum ve kabul ediyorum.
+    </span>
+  </label>
+  
+ <label className="flex items-start cursor-pointer group select-none">
+  <div className="relative flex items-center mt-0.5">
+    <input 
+      type="checkbox" 
+      name="terms_accepted" 
+      required 
+      checked={formData.terms_accepted} 
+      onChange={handleChange} 
+      className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-300 transition-all checked:border-yellow-400 checked:bg-yellow-400 hover:border-yellow-400" 
+    />
+    <BiCheckCircle className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100" size={14} />
+  </div>
+  <span className="ml-3 text-sm text-gray-600 group-hover:text-gray-900 transition font-medium">
+    <button
+      type="button"
+      onClick={() => {
+        setKvkkModalType('kosullar');
+        setShowKvkkModal(true);
+      }}
+      className="text-blue-600 hover:text-blue-700 font-bold underline"
+    >
+      Kullanım Koşulları
+    </button>
+    'nı okudum ve kabul ediyorum.
+  </span>
+</label>
+</div>
 
                 {/* BUTON */}
                 <button
@@ -418,9 +472,17 @@ export const StudentRegisterPage = () => {
         }}
         onClose={() => setShowPhoneModal(false)}
       />
+
+      <KvkkModal
+  isOpen={showKvkkModal}
+  onClose={() => setShowKvkkModal(false)}
+  type={kvkkModalType}
+/>
     </div>
   );
 };
+
+
 
 // --- YARDIMCI INPUT BİLEŞENİ (YENİ STİL) ---
 const InputGroup = ({ icon, label, name, type = "text", value, onChange, placeholder, maxLength }) => (
@@ -443,3 +505,5 @@ const InputGroup = ({ icon, label, name, type = "text", value, onChange, placeho
         </div>
     </div>
 );
+
+
