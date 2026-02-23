@@ -22,6 +22,12 @@ import {
 
 import LogoImage from '../../../assets/yellow_logo.png';
 
+const getErrorMessage = (err) => {
+  const data = err.response?.data;
+  if (data?.errors?.length > 0) return data.errors.map(e => e.message).join(' • ');
+  return data?.message || 'Bir hata oluştu';
+};
+
 const MobileSenderRegister = () => {
   const [accountType, setAccountType] = useState('individual'); // 'individual' or 'corporate'
   const [formData, setFormData] = useState({
@@ -83,8 +89,8 @@ const MobileSenderRegister = () => {
       await authService.registerSender(data);
       navigate('/sender/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Kayıt başarısız');
-    } finally {
+  setError(getErrorMessage(err));
+}finally {
       setLoading(false);
     }
   };

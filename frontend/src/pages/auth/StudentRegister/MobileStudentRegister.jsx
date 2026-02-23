@@ -14,6 +14,12 @@ import {
 
 import LogoImage from '../../../assets/yellow_logo.png'; 
 
+const getErrorMessage = (err) => {
+  const data = err.response?.data;
+  if (data?.errors?.length > 0) return data.errors.map(e => e.message).join(' • ');
+  return data?.message || 'Bir hata oluştu';
+};
+
  const MobileStudentRegister = () => {
   const [formData, setFormData] = useState({
     email: '', phone: '', password: '', password_confirm: '',
@@ -29,6 +35,9 @@ import LogoImage from '../../../assets/yellow_logo.png';
   const [loading, setLoading] = useState(false);
   const [phoneVerified, setPhoneVerified] = useState(false);
   const [showPhoneModal, setShowPhoneModal] = useState(false);
+
+
+  
 
   const navigate = useNavigate();
 
@@ -61,8 +70,8 @@ import LogoImage from '../../../assets/yellow_logo.png';
       await authService.registerStudent(data);
       navigate('/register/success');
     } catch (err) {
-      setError(err.response?.data?.message || 'Kayıt başarısız');
-    } finally {
+  setError(getErrorMessage(err));
+} finally {
       setLoading(false);
     }
   };

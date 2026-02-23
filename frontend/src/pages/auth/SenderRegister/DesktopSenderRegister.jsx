@@ -24,6 +24,13 @@ import {
 import LogoImage from '../../../assets/yellow_logo.png'; 
 import HeroImage from '../../../assets/login-hero.png'; 
 
+
+const getErrorMessage = (err) => {
+  const data = err.response?.data;
+  if (data?.errors?.length > 0) return data.errors.map(e => e.message).join(' • ');
+  return data?.message || 'Bir hata oluştu';
+};
+
 const DesktopSenderRegister = () => {
   const [accountType, setAccountType] = useState('individual'); // 'individual' or 'corporate'
   const [formData, setFormData] = useState({
@@ -108,8 +115,8 @@ const DesktopSenderRegister = () => {
       await authService.registerSender(submitData);
       navigate('/sender/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Kayıt başarısız. Lütfen bilgilerinizi kontrol edin.');
-    } finally {
+  setError(getErrorMessage(err));
+} finally {
       setLoading(false);
     }
   };
