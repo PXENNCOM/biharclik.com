@@ -3,9 +3,9 @@ import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 
 // Auth Pages
-import { LoginPage } from './pages/auth/LoginPage';
-import { StudentRegisterPage } from './pages/auth/StudentRegisterPage';
-import { SenderRegisterPage } from './pages/auth/SenderRegisterPage';
+import { LoginController as LoginPage } from './pages/auth/Login/LoginController';
+import  StudentRegisterPage  from './pages/auth/StudentRegister/StudentRegisterController';
+import SenderRegisterPage from './pages/auth/SenderRegister/SenderRegisterController';
 import { RegisterSuccessPage } from './pages/auth/RegisterSuccessPage';
 
 // Student Pages

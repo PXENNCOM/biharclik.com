@@ -29,3 +29,5 @@ coverage/
 dist/
 build/
 
+
+backend/src/config/serviceAccountKey.json

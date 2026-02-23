@@ -1,49 +1,53 @@
-import { useLocation, useNavigate } from 'react-router-dom';
-import { BiCheckCircle, BiRightArrowAlt, BiInfoCircle, BiStar } from 'react-icons/bi';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { BiCheckCircle, BiChevronLeft, BiRightArrowAlt } from 'react-icons/bi';
+import LogoImage from '../../assets/yellow_logo.png';
 
 export const RegisterSuccessPage = () => {
-  const location = useLocation();
   const navigate = useNavigate();
-  const message = location.state?.message || 'Kaydınız başarıyla alındı!';
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 font-sans relative overflow-hidden">
+    <div className="min-h-screen bg-white font-sans flex flex-col items-center">
       
-      {/* Arka Plan Dekorasyonu */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -left-40 w-96 h-96 bg-yellow-300 rounded-full blur-3xl opacity-20"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-yellow-200 rounded-full blur-3xl opacity-20"></div>
-      </div>
-
-      {/* Ana Kart */}
-      <div className="max-w-md w-full bg-white rounded-[2.5rem] p-8 sm:p-12 shadow-2xl relative z-10 text-center mx-4 border border-gray-100">
-        
-        {/* İkon Animasyonu */}
-        <div className="relative mb-8 inline-block">
-            <div className="absolute inset-0 bg-green-100 rounded-full animate-ping opacity-75"></div>
-            <div className="relative w-24 h-24 bg-green-100 rounded-full flex items-center justify-center shadow-sm">
-                <BiCheckCircle size={48} className="text-green-600" />
-            </div>
-        </div>
-
-        {/* Başlık ve Mesaj */}
-        <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">
-          Aramıza Hoş Geldin! 🎉
-        </h2>
-        <p className="text-gray-500 font-medium mb-8 leading-relaxed">
-          {message}
-        </p>
-
-        {/* Aksiyon Butonu */}
-        <button
-          onClick={() => navigate('/login')}
-          className="w-full bg-gray-900 hover:bg-black text-white font-bold rounded-2xl py-4 shadow-lg shadow-gray-200 transform transition active:scale-95 flex items-center justify-center gap-2 group"
-        >
-          <span>Giriş Sayfasına Dön</span>
-          <BiRightArrowAlt size={24} className="group-hover:translate-x-1 transition-transform" />
+      {/* HEADER */}
+      <header className="w-full max-w-7xl px-6 py-8 flex justify-between items-center">
+        <button onClick={() => navigate('/login')} className="p-2 text-gray-400 hover:text-black transition-colors">
+          <BiChevronLeft size={28} />
         </button>
-        
-      </div>
+        <img src={LogoImage} alt="Logo" className="h-7 w-auto" />
+        <div className="w-10"></div>
+      </header>
+
+      {/* MAIN CONTENT */}
+      <main className="flex-1 flex flex-col items-center justify-center px-6 w-full max-w-lg">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+          className="w-full flex flex-col items-center"
+        >
+          {/* SUCCESS ICON */}
+          <div className="w-20 h-20 bg-yellow-400 rounded-full flex items-center justify-center text-white mb-8 shadow-xl shadow-yellow-200">
+            <BiCheckCircle size={44} />
+          </div>
+
+          {/* TEXTS - STRICTLY SINGLE LINE */}
+          <h2 className="text-2xl font-black text-gray-900 mb-2 whitespace-nowrap">Kayıt İşleminiz Başarılı!</h2>
+          <p className="text-gray-500 font-bold text-sm mb-10 whitespace-nowrap">Kaydınız sonuçlandığında sizi bilgilendireceğiz.</p>
+
+          {/* ACTION BUTTON */}
+          <button
+            onClick={() => navigate('/login')}
+            className="w-full bg-gray-900 hover:bg-black text-white font-bold rounded-2xl py-4 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs uppercase tracking-widest"
+          >
+            Giriş Sayfasına Dön <BiRightArrowAlt size={18} className="text-yellow-400" />
+          </button>
+        </motion.div>
+      </main>
+
+      {/* FOOTER */}
+      <footer className="py-8">
+        <p className="text-[10px] font-black text-gray-200 uppercase tracking-[0.4em]">Biharçlık • 2026</p>
+      </footer>
+
     </div>
   );
 };
