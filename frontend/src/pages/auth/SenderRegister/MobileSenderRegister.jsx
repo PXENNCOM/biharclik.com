@@ -109,7 +109,6 @@ const MobileSenderRegister = () => {
 
         <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="text-center lg:text-left">
           <h1 className="text-3xl lg:text-4xl font-bold text-white mb-2 tracking-tight">Gönderici Kaydı</h1>
-          <p className="text-gray-400 text-sm">Hemen hesabını oluştur ve paketini gönder.</p>
         </motion.div>
       </div>
 
