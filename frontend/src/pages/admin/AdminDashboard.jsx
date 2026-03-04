@@ -432,7 +432,7 @@ export const AdminDashboard = () => {
                       </div>
                     </div>
                     <a
-                      href={`https://biharclik.com${selectedStudent.student_document_url}`}
+                      href={`https://api.biharclik.com${selectedStudent.student_document_url}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition shadow-md shadow-blue-200"
