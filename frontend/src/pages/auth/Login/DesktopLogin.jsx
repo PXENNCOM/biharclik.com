@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
+import { trackEvent } from '../../../utils/analytics';
+
 
 import {
   BiEnvelope,
@@ -25,22 +27,24 @@ const DesktopLogin = () => {
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
+  e.preventDefault();
+  setError('');
+  setLoading(true);
 
-    try {
-      const user = await login(identifier, password);
-      if (user.role === 'student') navigate('/student/dashboard');
-      else if (user.role === 'sender') navigate('/sender/dashboard');
-      else if (user.role === 'admin') navigate('/admin/dashboard');
-    } catch (err) {
-      setError(err.response?.data?.message || 'Giriş yapılamadı. Bilgilerinizi kontrol edin.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  try {
+    const user = await login(identifier, password);
+    trackEvent('Giriş', 'giriş_başarılı', user.role);
+    if (user.role === 'student') navigate('/student/dashboard');
+    else if (user.role === 'sender') navigate('/sender/dashboard');
+    else if (user.role === 'admin') navigate('/admin/dashboard');
+  } catch (err) {
+    const msg = err.response?.data?.message || 'Giriş yapılamadı. Bilgilerinizi kontrol edin.';
+    setError(msg);
+    trackEvent('Giriş', 'giriş_hatası', msg);
+  } finally {
+    setLoading(false);
+  }
+};
   return (
     <div className="min-h-screen flex bg-white font-sans text-gray-900">
 

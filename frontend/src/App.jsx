@@ -1,4 +1,7 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { trackPageView } from './utils/analytics';
+
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 
@@ -29,6 +32,13 @@ import { ProfilePage } from './pages/common/ProfilePage';
 import { SupportPage } from './pages/common/SupportPage';
 
 function App() {
+
+  const location = useLocation();
+
+  useEffect(() => {
+  trackPageView(location.pathname);
+  }, [location]);
+
   return (
     <BrowserRouter>
       <AuthProvider>

@@ -11,7 +11,6 @@ router.post(
   '/register/student',
   upload.fields([
     { name: 'student_document', maxCount: 1 },
-    { name: 'profile_photo', maxCount: 1 }
   ]),
   handleMulterError,
   validate(AuthValidator.studentRegister),

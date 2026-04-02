@@ -339,36 +339,49 @@ export const StudentDashboard = () => {
 };
 
 
-const NavButton = ({ onClick, icon, label, color }) => {
-  const isBlue = color === 'blue';
-  const isYellow = color === 'yellow'; // Sarı renk mantığı eklendi
+const NavButton = ({ onClick, icon, label, variant = 'default' }) => {
+  // Renk ve Stil Konfigürasyonu
+  const variants = {
+    default: {
+      button: "bg-white border-slate-100 text-slate-700 hover:border-slate-200 hover:bg-slate-50 shadow-sm",
+      iconBox: "bg-slate-50 text-slate-400 group-hover:bg-white group-hover:text-slate-600",
+    },
+    blue: {
+      button: "bg-blue-50/50 border-blue-100 text-blue-700 hover:bg-blue-100/50 shadow-blue-900/5",
+      iconBox: "bg-white text-blue-500 shadow-sm shadow-blue-200/50",
+    },
+    yellow: {
+      button: "bg-yellow-400 border-yellow-400 text-slate-900 hover:bg-yellow-500 shadow-yellow-400/20",
+      iconBox: "bg-white/20 text-slate-900 backdrop-blur-sm",
+    }
+  };
 
-  let baseClasses = "bg-white border-gray-200 text-gray-700 hover:bg-gray-50";
-  let iconBg = "bg-gray-100";
-
-  if (isBlue) {
-    baseClasses = "bg-blue-50 border-blue-100 text-blue-700 hover:bg-blue-100";
-    iconBg = "bg-white/50";
-  } else if (isYellow) {
-    // Sarı renk sınıfları
-    baseClasses = "bg-yellow-50 border-yellow-200 text-yellow-800 hover:bg-yellow-100";
-    iconBg = "bg-yellow-200 text-yellow-900";
-  }
+  const style = variants[variant] || variants.default;
 
   return (
     <button
       onClick={onClick}
       className={`
-        flex flex-col lg:flex-row items-center justify-center lg:justify-between gap-1 lg:gap-3 
-        p-2 md:p-4 rounded-2xl border shadow-sm transition-all active:scale-95
-        ${baseClasses}
+        group flex flex-col lg:flex-row items-center justify-center lg:justify-between 
+        gap-2 lg:gap-4 p-3 md:p-4 rounded-[24px] border transition-all duration-300 active:scale-[0.96]
+        ${style.button}
       `}
     >
-      <div className={`p-2 rounded-full ${iconBg}`}>
+      {/* İkon Kutusu */}
+      <div className={`p-2.5 rounded-xl transition-colors duration-300 ${style.iconBox}`}>
         {icon}
       </div>
-      <span className="text-[11px] md:text-sm font-bold lg:w-full lg:text-left">{label}</span>
-      <BiChevronRight className="hidden lg:block opacity-50" size={20} />
+
+      {/* Metin Alanı */}
+      <span className="text-[11px] md:text-[13px] font-extrabold uppercase tracking-tight lg:flex-1 lg:text-left">
+        {label}
+      </span>
+
+      {/* Sağ Ok (Sadece Masaüstü) */}
+      <BiChevronRight 
+        className={`hidden lg:block transition-transform duration-300 group-hover:translate-x-1 ${variant === 'yellow' ? 'opacity-100' : 'opacity-30'}`} 
+        size={20} 
+      />
     </button>
   );
 };

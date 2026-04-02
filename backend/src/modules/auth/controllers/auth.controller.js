@@ -13,16 +13,11 @@ class AuthController {
     if (!req.files || !req.files.student_document) {
       return ApiResponse.error(res, 'Öğrenci belgesi zorunludur', 400);
     }
-    
-    if (!req.files || !req.files.profile_photo) {
-      return ApiResponse.error(res, 'Profil fotoğrafı zorunludur', 400);
-    }
 
     // Dosya yollarını ekle
     const studentData = {
       ...req.body,
       student_document_url: `/uploads/students/${req.files.student_document[0].filename}`,
-      profile_photo: `/uploads/profile-photos/${req.files.profile_photo[0].filename}`
     };
 
     const result = await AuthService.registerStudent(studentData);

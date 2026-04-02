@@ -51,24 +51,22 @@ class AuthService {
       await connection.query(`
   INSERT INTO students (
     user_id, first_name, last_name, tc_no, birth_date,
-    iban, address, university, department, student_document_url,
-    profile_photo, kvkk_accepted, terms_accepted
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    iban, university, department, student_document_url,
+    kvkk_accepted, terms_accepted
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `, [
-        userId,
-        data.first_name,
-        data.last_name,
-        data.tc_no,
-        data.birth_date,
-        data.iban,
-        data.address,
-        data.university,
-        data.department,
-        data.student_document_url,
-        data.profile_photo, 
-        data.kvkk_accepted,
-        data.terms_accepted
-      ]);
+  userId,
+  data.first_name,
+  data.last_name,
+  data.tc_no,
+  data.birth_date,
+  data.iban,
+  data.university,
+  data.department,
+  data.student_document_url,
+  data.kvkk_accepted,
+  data.terms_accepted
+]);
 
       // Kullanıcı bilgilerini al (transaction içinde)
       const [users] = await connection.query(

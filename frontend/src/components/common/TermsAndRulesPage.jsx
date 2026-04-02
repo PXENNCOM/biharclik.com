@@ -1,291 +1,195 @@
 // Dosya: /src/components/common/TermsAndRulesModal.jsx
 
-import React from 'react';
+import React, { useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  BiShield, 
-  BiError, 
-  BiMoney, 
-  BiPackage, 
-  BiCopyright,
-  BiInfoCircle,
-  BiCheckDouble,
-  BiX,
-  BiTime,
-  BiLock,
-  BiBadgeCheck
-} from 'react-icons/bi';
+  ShieldAlert, 
+  AlertTriangle, 
+  Package, 
+  Gavel, 
+  Info, 
+  CheckCircle2, 
+  X, 
+  Lock, 
+  Scale,
+  ArrowRight,
+  ShieldCheck
+} from 'lucide-react';
 
 export const TermsAndRulesModal = ({ isOpen, onClose }) => {
+  // Modal açıldığında scroll'u en üste zorla
+  useEffect(() => {
+    if (isOpen) {
+      const scrollContainer = document.getElementById('rules-scroll-container');
+      if (scrollContainer) scrollContainer.scrollTo(0, 0);
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-0 md:p-4 font-sans">
-      <div 
-        className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" 
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-6 antialiased">
+      {/* Backdrop */}
+      <motion.div 
+        initial={{ opacity: 0 }} 
+        animate={{ opacity: 1 }} 
+        exit={{ opacity: 0 }}
+        className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" 
         onClick={onClose}
       />
 
-      <div className="relative bg-white w-full h-full md:h-auto md:max-h-[90vh] md:w-[850px] md:rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+      {/* Modal Container */}
+      <motion.div 
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        className="relative bg-white w-full h-full md:h-auto md:max-h-[85vh] md:max-w-3xl md:rounded-[40px] shadow-2xl flex flex-col overflow-hidden border border-white/20"
+      >
         
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 md:p-5 border-b border-gray-100 bg-white sticky top-0 z-10">
-          <div className="flex items-center gap-2 md:gap-3">
-            <div className="bg-red-50 text-red-600 p-2 rounded-xl">
-              <BiShield size={20} className="md:w-6 md:h-6" />
-            </div>
+        {/* --- HEADER --- */}
+        <div className="flex items-center justify-between p-6 md:p-8 border-b border-slate-50 sticky top-0 bg-white/80 backdrop-blur-xl z-20">
+          <div className="flex items-center gap-4">
             <div>
-              <h2 className="text-base md:text-lg font-black text-gray-900 leading-none">Kurallar ve Sorumluluklar</h2>
-              <p className="text-[10px] md:text-xs text-gray-500 mt-0.5 md:mt-1">Güvenliğiniz ve yasal haklarınız için okumanız zorunludur</p>
+              <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight">Hukuki Şartlar</h2>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-0.5">Yasal Sorumluluk ve Kullanım Rehberi</p>
             </div>
           </div>
           <button 
             onClick={onClose} 
-            className="p-2 bg-gray-50 hover:bg-gray-100 rounded-full text-gray-500 transition-colors"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all active:scale-90"
           >
-            <BiX size={24} className="md:w-7 md:h-7" />
+            <X size={20} strokeWidth={2.5} />
           </button>
         </div>
 
-        {/* İçerik */}
-        <div className="overflow-y-auto flex-1 p-4 md:p-6 lg:p-8 bg-gray-50">
+        {/* --- CONTENT --- */}
+        <div 
+          id="rules-scroll-container"
+          className="overflow-y-auto flex-1 p-6 md:p-10 space-y-12 bg-[#FDFDFD] scroll-smooth"
+        >
           
-          {/* KRİTİK UYARI */}
-          <div className="bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-200 rounded-2xl p-4 md:p-5 mb-6 shadow-lg">
-            <div className="flex gap-3">
-              <BiError className="text-red-600 flex-shrink-0 mt-0.5" size={24} />
-              <div>
-                <h3 className="font-black text-red-900 text-sm md:text-base mb-2">⚠️ KRİTİK UYARI</h3>
-                <p className="text-xs md:text-sm text-red-800 leading-relaxed font-bold mb-2">
-                  Bu platform <strong>6098 sayılı Türk Borçlar Kanunu</strong> ve <strong>5510 sayılı Sosyal Sigortalar Kanunu</strong> kapsamında çalışır. 
-                  Aşağıdaki kurallara uymamak yasal sorumluluk doğurur ve platform erişiminiz kalıcı olarak kapatılır.
-                </p>
-                <p className="text-xs md:text-sm text-red-700 leading-relaxed">
-                  Kurye olarak çalışmanız, sigortalı çalışan statüsü oluşturabilir. Gelir kaynağınızın %50'sinden fazlasını bu platformdan kazanmamalısınız.
-                </p>
+          {/* KRİTİK YASAL UYARI (Apple Tarzı) */}
+          <section className="bg-white border-2 border-slate-900 rounded-[32px] p-6 md:p-8 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-slate-900/5 blur-3xl rounded-full" />
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-4">
+                <AlertTriangle className="text-slate-900" size={20} />
+                <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-[0.3em]">Önemli Mevzuat Hatırlatması</h3>
+              </div>
+              <p className="text-sm text-slate-700 leading-relaxed font-medium">
+                Bu platform <strong className="text-slate-900 underline decoration-yellow-400 decoration-2">6098 sayılı Türk Borçlar Kanunu</strong> kapsamında çalışmaktadır. Biharçlık bir işveren değil, bağımsız hizmet sağlayıcılar (öğrenciler) ile göndericileri buluşturan bir aracıdır.
+              </p>
+              <div className="mt-6 flex items-center gap-2 text-[10px] font-bold text-slate-400 italic">
+                <Info size={14} /> 6563 Sayılı E-Ticaret Kanunu'na tabidir.
               </div>
             </div>
+          </section>
+
+          {/* MADDELER */}
+          <div className="space-y-16">
+
+            {/* Madde 1 */}
+            <RuleSection 
+              num="01" 
+              title="Yasaklı Gönderi Protokolü" 
+              icon={<Scale size={20} />}
+              desc="Aşağıdaki öğelerin taşınması kesinlikle yasaktır ve tespiti halinde kolluk kuvvetlerine bildirim zorunluluğu vardır."
+            >
+              <div className="grid grid-cols-2 gap-2 mt-4">
+                <ForbiddenItem label="Nakit & Değerli Evrak" />
+                <ForbiddenItem label="Altın & Mücevher" />
+                <ForbiddenItem label="Yasa Dışı Maddeler" />
+                <ForbiddenItem label="Yanıcı & Patlayıcılar" />
+                <ForbiddenItem label="Açık Gıda & Sıvılar" />
+                <ForbiddenItem label="Kimlik & Pasaport" />
+              </div>
+            </RuleSection>
+
+            {/* Madde 2 */}
+            <RuleSection 
+              num="02" 
+              title="Emanet ve Sigorta Kapsamı" 
+              icon={<ShieldCheck size={20} />}
+              desc="Taşıma esnasındaki sorumluluk sınırları YÖK ve TBK mevzuatlarına göre belirlenmiştir."
+            >
+              <div className="space-y-4">
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                  <p className="text-xs font-bold text-slate-900 mb-2">Hasar Sorumluluğu:</p>
+                  <p className="text-xs text-slate-500 leading-relaxed italic">
+                    Belgelememiş veya sigortalanmamış gönderilerde, kurye (öğrenci) taşıma kusuru ispatlandığı takdirde doğrudan sorumludur. Platform arabulucu rolü üstlenir.
+                  </p>
+                </div>
+              </div>
+            </RuleSection>
+
+            {/* Madde 3 */}
+            <RuleSection 
+              num="03" 
+              title="Sosyal Güvenlik (SGK) Uyumu" 
+              icon={<Gavel size={20} />}
+              desc="Hizmet sağlayıcıların çalışma statüsü hakkında kritik bilgilendirme."
+            >
+              <ul className="space-y-3">
+                <CheckItem text="Haftalık 30 saati aşan işlemler SGK tescil zorunluluğu doğurabilir." />
+                <CheckItem text="Biharçlık geliriniz, toplam gelirinizin %50'sini geçmemelidir." />
+                <CheckItem text="Öğrenci statünüzün korunması için vergi limitlerine dikkat ediniz." />
+              </ul>
+            </RuleSection>
+
           </div>
 
-          <div className="space-y-4 md:space-y-6">
-
-            {/* 1. KABUL EDEMEZSİN - YASAKLI GÖNDERİLER */}
-            <section className="bg-white rounded-2xl shadow-sm border-2 border-red-200 overflow-hidden">
-              <div className="bg-red-50 p-3 md:p-4 border-b-2 border-red-200 flex items-center gap-3">
-                <BiError className="text-red-600 flex-shrink-0" size={20} />
-                <h3 className="font-bold text-gray-900 text-sm md:text-base">1. KABUL EDEMEZSİNİZ - Yasaklı Gönderiler</h3>
-              </div>
-              <div className="p-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3 mb-4">
-                  <div className="bg-red-50 p-2.5 rounded-lg text-xs font-bold text-red-800 flex items-center gap-2 border border-red-200">
-                    <span>💰</span> Para, Çek, Kredi Kartı
-                  </div>
-                  <div className="bg-red-50 p-2.5 rounded-lg text-xs font-bold text-red-800 flex items-center gap-2 border border-red-200">
-                    <span>💎</span> Altın, Mücevher, Değerli Eşya
-                  </div>
-                  <div className="bg-red-50 p-2.5 rounded-lg text-xs font-bold text-red-800 flex items-center gap-2 border border-red-200">
-                    <span>☕</span> Sıvı Gıdalar, Akışkanlar
-                  </div>
-                  <div className="bg-red-50 p-2.5 rounded-lg text-xs font-bold text-red-800 flex items-center gap-2 border border-red-200">
-                    <span>🏺</span> Korumasız Kırılabilir Eşya
-                  </div>
-                  <div className="bg-red-50 p-2.5 rounded-lg text-xs font-bold text-red-800 flex items-center gap-2 border border-red-200">
-                    <span>⛔</span> Yasa Dışı/Uyuşturucu
-                  </div>
-                  <div className="bg-red-50 p-2.5 rounded-lg text-xs font-bold text-red-800 flex items-center gap-2 border border-red-200">
-                    <span>🔪</span> Silah, Kesici Alet
-                  </div>
-                </div>
-                
-                <div className="bg-red-100 border-2 border-red-300 rounded-xl p-3 md:p-4 space-y-2">
-                  <p className="text-xs md:text-sm text-red-900 font-bold flex items-start gap-2">
-                    <BiLock className="flex-shrink-0 mt-0.5" size={16} />
-                    <span>Bu kategorideki teslimatları kabul ederseniz YASAL SORUMLULUK size aittir. Polis kontrolünde suçlu duruma düşebilirsiniz.</span>
-                  </p>
-                  <p className="text-xs md:text-sm text-red-900 font-bold flex items-start gap-2">
-                    <BiError className="flex-shrink-0 mt-0.5" size={16} />
-                    <span>Şüpheli paket gördüğünüzde RED etme hakkınız vardır. Platform size baskı yapamaz.</span>
-                  </p>
-                </div>
-              </div>
-            </section>
-
-            {/* 2. SİGORTA VE SORUMLULUK */}
-            <section className="bg-white rounded-2xl shadow-sm border-2 border-orange-200 overflow-hidden">
-              <div className="bg-orange-50 p-3 md:p-4 border-b-2 border-orange-200 flex items-center gap-3">
-                <BiShield className="text-orange-600 flex-shrink-0" size={20} />
-                <h3 className="font-bold text-gray-900 text-sm md:text-base">2. Sigorta ve Hasar Sorumluluğu</h3>
-              </div>
-              <div className="p-4 space-y-3">
-                <div className="bg-orange-50 border-2 border-orange-200 rounded-xl p-3 md:p-4">
-                  <p className="text-xs md:text-sm text-orange-900 font-bold mb-3">
-                    📋 EMANET KURALI (Türk Borçlar Kanunu Md. 561-571)
-                  </p>
-                  <ul className="space-y-2 text-xs md:text-sm text-orange-800">
-                    <li className="flex items-start gap-2">
-                      <span className="text-orange-600 font-black">•</span>
-                      <span><strong>1.000 TL'ye kadar:</strong> Sigorta YOK, hasar durumunda SİZ sorumlusunuz</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-orange-600 font-black">•</span>
-                      <span><strong>1.000-10.000 TL arası:</strong> Mikro sigorta (50-150 TL ücret), hasar durumunda sigorta öder</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-orange-600 font-black">•</span>
-                      <span><strong>10.000 TL üzeri:</strong> Tam sigorta zorunlu (400 TL ücret), GPS takip + kamera kaydı</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <div className="bg-red-100 border-2 border-red-300 rounded-xl p-3 md:p-4">
-                  <p className="text-xs md:text-sm text-red-900 font-black mb-2">
-                    ⚠️ HASAR/KAYIP DURUMUNDA:
-                  </p>
-                  <p className="text-xs md:text-sm text-red-800 leading-relaxed">
-                    Teslimatı kaybederseniz veya hasar verirseniz, <strong>MAL SAHİBİ SİZE DAVA AÇABİLİR</strong>. 
-                    Platform aracı konumundadır, yasal sorumluluk kurye (siz) ve göndericiye aittir.
-                  </p>
-                </div>
-              </div>
-            </section>
-
-            {/* 3. PAKETLEME SORUMLULUĞU */}
-            <section className="bg-white rounded-2xl shadow-sm border-2 border-yellow-200 overflow-hidden">
-              <div className="bg-yellow-50 p-3 md:p-4 border-b-2 border-yellow-200 flex items-center gap-3">
-                <BiPackage className="text-yellow-600 flex-shrink-0" size={20} />
-                <h3 className="font-bold text-gray-900 text-sm md:text-base">3. Paketleme ve Teslim Alma Kuralları</h3>
-              </div>
-              <div className="p-4 space-y-3">
-                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 md:p-4">
-                  <p className="text-xs md:text-sm text-yellow-900 font-bold mb-2">
-                    ✅ KABUL EDEBİLİRSİNİZ:
-                  </p>
-                  <ul className="space-y-1.5 text-xs md:text-sm text-yellow-800">
-                    <li className="flex items-start gap-2">
-                      <BiCheckDouble className="text-green-600 flex-shrink-0 mt-0.5" size={16} />
-                      <span>Sağlam karton kutu, bantlanmış, ezilmeye dayanıklı</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <BiCheckDouble className="text-green-600 flex-shrink-0 mt-0.5" size={16} />
-                      <span>Evrak zarfı, kalın dosya kapağı, bubble wrap korumalı</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <BiCheckDouble className="text-green-600 flex-shrink-0 mt-0.5" size={16} />
-                      <span>Toplu taşımada 2-3 saatlik yolculuğa dayanabilecek paket</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <div className="bg-red-50 border-2 border-red-200 rounded-xl p-3 md:p-4">
-                  <p className="text-xs md:text-sm text-red-900 font-bold mb-2">
-                    ❌ REDDEDİN:
-                  </p>
-                  <ul className="space-y-1.5 text-xs md:text-sm text-red-800">
-                    <li className="flex items-start gap-2">
-                      <BiX className="text-red-600 flex-shrink-0 mt-0.5" size={16} />
-                      <span>İnce naylon poşet, yırtılabilir zarf, bantlanmamış kutu</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <BiX className="text-red-600 flex-shrink-0 mt-0.5" size={16} />
-                      <span>Açık paket, içeriği görünmeyen/bilinmeyen paket</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <BiX className="text-red-600 flex-shrink-0 mt-0.5" size={16} />
-                      <span>Islak, yağlı, sızan, kötü kokulu paket</span>
-                    </li>
-                  </ul>
-                  <p className="text-xs md:text-sm text-red-900 font-black mt-3 bg-red-100 p-2 rounded-lg">
-                    ⚠️ Yetersiz paketlemeden kaynaklı hasar SİZİN sorumluluğunuz DEĞİLDİR - ama paketi teslim almadan önce kontrol etmezseniz, ispat edemezsiniz!
-                  </p>
-                </div>
-              </div>
-            </section>
-
-
-            {/* 5. YASAL STATÜ UYARISI */}
-            <section className="bg-white rounded-2xl shadow-sm border-2 border-blue-200 overflow-hidden">
-              <div className="bg-blue-50 p-3 md:p-4 border-b-2 border-blue-200 flex items-center gap-3">
-                <BiCopyright className="text-blue-600 flex-shrink-0" size={20} />
-                <h3 className="font-bold text-gray-900 text-sm md:text-base">5. Çalışma Statüsü ve Sigorta Uyarısı</h3>
-              </div>
-              <div className="p-4">
-                <div className="bg-blue-100 border-2 border-blue-300 rounded-xl p-3 md:p-4 space-y-3">
-                  <p className="text-xs md:text-sm text-blue-900 font-bold">
-                    📜 5510 Sayılı Sosyal Sigortalar Kanunu Uyarısı:
-                  </p>
-                  <ul className="space-y-2 text-xs md:text-sm text-blue-800">
-                    <li className="flex items-start gap-2">
-                      <span className="text-blue-600 font-black">•</span>
-                      <span>Bu platform üzerinden aylık geliriniz <strong>toplam gelirinizin %50'sini geçmemelidir</strong></span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-blue-600 font-black">•</span>
-                      <span>Haftada 30 saat üzeri çalışırsanız SGK tescil zorunluluğu doğar</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-blue-600 font-black">•</span>
-                      <span>Platform "aracı" konumundadır, işveren değildir - siz bağımsız hizmet sağlayıcısınız</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-blue-600 font-black">•</span>
-                      <span>Kooperatif üyesi olarak vergi/sigorta sorumluluğu size aittir</span>
-                    </li>
-                  </ul>
-                  <p className="text-xs md:text-sm text-blue-900 font-black bg-blue-200 p-2 md:p-3 rounded-lg mt-3">
-                    ⚖️ Aylık 10.000 TL üzeri kazanç elde ederseniz vergi mükellefiyeti başlar. Muhasebeci ile görüşmeniz önerilir.
-                  </p>
-                </div>
-              </div>
-            </section>
-
-            <section className="bg-gradient-to-r from-red-50 to-orange-50 rounded-2xl shadow-lg border-2 border-red-300 overflow-hidden">
-              <div className="bg-red-100 p-3 md:p-4 border-b-2 border-red-300 flex items-center gap-3">
-                <BiError className="text-red-700 flex-shrink-0" size={20} />
-                <h3 className="font-bold text-red-900 text-sm md:text-base">6. KİŞİSEL GÜVENLİK KURALLARI</h3>
-              </div>
-              <div className="p-4">
-                <div className="space-y-2">
-                  <p className="text-xs md:text-sm text-red-900 font-bold flex items-start gap-2">
-                    <BiLock className="flex-shrink-0 mt-0.5" size={16} />
-                    <span>Kimliğinizi göstermeden ÖN ÖDEME istenmesi DOLANDIRICILIKTIR</span>
-                  </p>
-                  <p className="text-xs md:text-sm text-red-900 font-bold flex items-start gap-2">
-                    <BiLock className="flex-shrink-0 mt-0.5" size={16} />
-                    <span>Teslimatı başka birine devretmek YASAKTIR - hesabınız kapatılır</span>
-                  </p>
-                  <p className="text-xs md:text-sm text-red-900 font-bold flex items-start gap-2">
-                    <BiLock className="flex-shrink-0 mt-0.5" size={16} />
-                    <span>Tehlikeli bölgelerde (gece geç saatler, tenha yerler) teslimat REDDETME HAKKINIZ vardır</span>
-                  </p>
-                  <p className="text-xs md:text-sm text-red-900 font-bold flex items-start gap-2">
-                    <BiLock className="flex-shrink-0 mt-0.5" size={16} />
-                    <span>Rahatsız edici/şüpheli davranış durumunda teslimatı bırakıp GÜVENLİK çağırabilirsiniz</span>
-                  </p>
-                </div>
-              </div>
-            </section>
-
-            {/* Footer */}
-            <div className="text-center pt-4 pb-6 opacity-60">
-              <div className="inline-flex items-center gap-1 text-[10px] md:text-xs text-gray-500">
-                <BiCopyright size={14} />
-                <span>6098 sayılı TBK, 5510 sayılı SGK, 6563 sayılı E-Ticaret Kanunu'na uygundur.</span>
-              </div>
-            </div>
-
+          {/* Final Footer Label */}
+          <div className="text-center py-10 opacity-30">
+             <p className="text-[9px] font-black uppercase tracking-[0.4em]">Biharçlık • 2026 • İstanbul</p>
           </div>
         </div>
 
-        {/* Alt Buton */}
-        <div className="p-4 bg-white border-t-2 border-gray-200 sticky bottom-0">
+        {/* --- ACTION BUTTON --- */}
+        <div className="p-6 md:p-8 bg-white border-t border-slate-50 flex items-center justify-center">
           <button 
             onClick={onClose} 
-            className="w-full py-3 md:py-4 bg-[#FBCF2D] hover:bg-black text-white font-bold rounded-xl md:rounded-2xl text-sm md:text-base transition active:scale-95"
+            className="w-full max-w-sm py-5 bg-slate-900 text-yellow-400 font-black rounded-3xl shadow-2xl shadow-slate-200 active:scale-95 transition-all uppercase tracking-[0.3em] text-[11px] flex items-center justify-center gap-3"
           >
-            Okudum, Kabul Ediyorum
+            <span>Şartları Kabul Ediyorum</span>
+            <ArrowRight size={18} />
           </button>
         </div>
 
-      </div>
+      </motion.div>
     </div>
   );
 };
+
+// --- YARDIMCI BİLEŞENLER ---
+
+const RuleSection = ({ num, title, icon, desc, children }) => (
+  <div className="relative">
+    <div className="flex items-start gap-6">
+      <div className="flex flex-col items-center">
+        <span className="text-[10px] font-black text-slate-200 leading-none mb-2">{num}</span>
+        <div className="w-[1px] h-full bg-slate-100 absolute top-4" />
+      </div>
+      <div className="flex-1">
+        <div className="flex items-center gap-2 mb-2 text-slate-900">
+          {icon}
+          <h4 className="text-sm font-black uppercase tracking-tight">{title}</h4>
+        </div>
+        <p className="text-xs text-slate-400 leading-relaxed mb-4">{desc}</p>
+        {children}
+      </div>
+    </div>
+  </div>
+);
+
+const ForbiddenItem = ({ label }) => (
+  <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-100 rounded-xl">
+    <X size={12} className="text-red-400" />
+    <span className="text-[10px] font-bold text-slate-600 uppercase tracking-tighter">{label}</span>
+  </div>
+);
+
+const CheckItem = ({ text }) => (
+  <li className="flex items-start gap-3">
+    <CheckCircle2 size={16} className="text-yellow-500 mt-0.5" strokeWidth={2.5} />
+    <span className="text-xs font-medium text-slate-600 leading-relaxed">{text}</span>
+  </li>
+);

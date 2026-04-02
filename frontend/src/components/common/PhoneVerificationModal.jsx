@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { BiX, BiPhone, BiCheckCircle, BiLoaderAlt, BiErrorCircle } from 'react-icons/bi';
 import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import { auth } from '../../config/firebase.config';
+import { trackEvent } from '../../utils/analytics';
 
 export const PhoneVerificationModal = ({ isOpen, phoneNumber, onVerified, onClose }) => {
   const [confirmationResult, setConfirmationResult] = useState(null);
@@ -77,97 +78,73 @@ export const PhoneVerificationModal = ({ isOpen, phoneNumber, onVerified, onClos
 
   // SMS Gönder
   const sendVerificationCode = async () => {
-    setLoading(true);
-    setError('');
+  setLoading(true);
+  setError('');
 
-    try {
-      // Telefon formatını düzelt
-      const formattedPhone = phoneNumber.startsWith('+90') 
-        ? phoneNumber 
-        : `+90${phoneNumber.substring(1)}`;
+  try {
+    const cleaned = phoneNumber.replace(/[\s\-().]/g, '');
+    const normalized = cleaned.startsWith('+90') 
+      ? cleaned 
+      : cleaned.startsWith('90') 
+        ? '+' + cleaned 
+        : cleaned.startsWith('0') 
+          ? '+90' + cleaned.substring(1) 
+          : '+90' + cleaned;
+    const formattedPhone = normalized;
 
-      console.log('SMS gönderiliyor:', formattedPhone);
+    console.log('SMS gönderiliyor:', formattedPhone);
 
-      const appVerifier = window.recaptchaVerifier;
-      
-      if (!appVerifier) {
-        throw new Error('reCAPTCHA hazır değil');
-      }
+    const appVerifier = window.recaptchaVerifier;
+    if (!appVerifier) throw new Error('reCAPTCHA hazır değil');
 
-      // Firebase ile SMS gönder
-      const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
-      
-      console.log('SMS başarıyla gönderildi');
-      
-      setConfirmationResult(confirmation);
-      setStep('verify');
-      setTimer(60);
-      
-    } catch (err) {
-      console.error('SMS gönderme hatası:', err);
-      
-      // Hata mesajları
-      let errorMessage = 'SMS gönderilemedi. Lütfen tekrar deneyin.';
-      
-      if (err.code === 'auth/invalid-phone-number') {
-        errorMessage = 'Geçersiz telefon numarası formatı';
-      } else if (err.code === 'auth/too-many-requests') {
-        errorMessage = 'Çok fazla deneme yapıldı. Lütfen 1 saat sonra tekrar deneyin.';
-      } else if (err.code === 'auth/quota-exceeded') {
-        errorMessage = 'SMS kotası doldu. Lütfen destek ekibiyle iletişime geçin.';
-      } else if (err.code === 'auth/invalid-app-credential') {
-        errorMessage = 'Firebase yapılandırma hatası. Yöneticiyle iletişime geçin.';
-      } else if (err.message) {
-        errorMessage = err.message;
-      }
-      
-      setError(errorMessage);
-      
-    } finally {
-      setLoading(false);
-    }
-  };
+    const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
+    console.log('SMS başarıyla gönderildi');
+
+    setConfirmationResult(confirmation);
+    setStep('verify');
+    setTimer(60);
+    trackEvent('Telefon', 'telefon_doğrulama_başlatıldı');
+
+  } catch (err) {
+    console.error('SMS gönderme hatası:', err);
+    let errorMessage = 'SMS gönderilemedi. Lütfen tekrar deneyin.';
+    if (err.code === 'auth/invalid-phone-number') errorMessage = 'Geçersiz telefon numarası formatı';
+    else if (err.code === 'auth/too-many-requests') errorMessage = 'Çok fazla deneme yapıldı. Lütfen 1 saat sonra tekrar deneyin.';
+    else if (err.code === 'auth/quota-exceeded') errorMessage = 'SMS kotası doldu. Lütfen destek ekibiyle iletişime geçin.';
+    else if (err.code === 'auth/invalid-app-credential') errorMessage = 'Firebase yapılandırma hatası. Yöneticiyle iletişime geçin.';
+    else if (err.message) errorMessage = err.message;
+    setError(errorMessage);
+    trackEvent('Telefon', 'telefon_sms_hatası', err.code);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Kodu Doğrula
   const verifyCode = async () => {
-    if (code.length !== 6) {
-      setError('Lütfen 6 haneli kodu girin');
-      return;
-    }
+  if (code.length !== 6) { setError('Lütfen 6 haneli kodu girin'); return; }
+  if (!confirmationResult) { setError('Önce SMS kodu gönderin'); return; }
 
-    if (!confirmationResult) {
-      setError('Önce SMS kodu gönderin');
-      return;
-    }
+  setLoading(true);
+  setError('');
 
-    setLoading(true);
-    setError('');
+  try {
+    await confirmationResult.confirm(code);
+    console.log('Telefon başarıyla doğrulandı!');
+    trackEvent('Telefon', 'telefon_doğrulama_tamamlandı');
+    onVerified();
 
-    try {
-      await confirmationResult.confirm(code);
-      
-      console.log('Telefon başarıyla doğrulandı!');
-      
-      // Başarılı! Parent'a bildir
-      onVerified();
-      
-    } catch (err) {
-      console.error('Kod doğrulama hatası:', err);
-      
-      let errorMessage = 'Kod doğrulanamadı';
-      
-      if (err.code === 'auth/invalid-verification-code') {
-        errorMessage = 'Hatalı kod. Lütfen kontrol edin.';
-      } else if (err.code === 'auth/code-expired') {
-        errorMessage = 'Kod süresi doldu. Yeni kod gönderin.';
-      }
-      
-      setError(errorMessage);
-      
-    } finally {
-      setLoading(false);
-    }
-  };
+  } catch (err) {
+    console.error('Kod doğrulama hatası:', err);
+    let errorMessage = 'Kod doğrulanamadı';
+    if (err.code === 'auth/invalid-verification-code') errorMessage = 'Hatalı kod. Lütfen kontrol edin.';
+    else if (err.code === 'auth/code-expired') errorMessage = 'Kod süresi doldu. Yeni kod gönderin.';
+    setError(errorMessage);
+    trackEvent('Telefon', 'telefon_kod_hatası', err.code);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Modal kapalıysa render etme
   if (!isOpen) return null;

@@ -8,10 +8,20 @@ class AuthValidator {
       'string.email': 'Geçerli bir e-posta adresi giriniz',
       'any.required': 'E-posta adresi zorunludur'
     }),
-    phone: Joi.string().pattern(/^(05)[0-9]{9}$/).required().messages({
-      'string.pattern.base': 'Geçerli bir telefon numarası giriniz (05xxxxxxxxx)',
-      'any.required': 'Telefon numarası zorunludur'
-    }),
+    phone: Joi.string()
+      .custom((value, helpers) => {
+        const cleaned = value.replace(/[\s\-().]/g, '');
+        const normalized = cleaned.startsWith('5') ? '0' + cleaned : cleaned;
+        if (!/^05[0-9]{9}$/.test(normalized)) {
+          return helpers.error('any.invalid');
+        }
+        return normalized; // normalize edilmiş hali kaydeder
+      })
+      .required()
+      .messages({
+        'any.invalid': 'Geçerli bir telefon numarası giriniz',
+        'any.required': 'Telefon numarası zorunludur'
+      }),
     password: Joi.string().min(6).required().messages({
       'string.min': 'Şifre en az 6 karakter olmalıdır',
       'any.required': 'Şifre zorunludur'
@@ -40,10 +50,6 @@ class AuthValidator {
       'string.pattern.base': 'Geçerli bir IBAN numarası giriniz (TR ile başlayan 26 haneli)',
       'any.required': 'IBAN numarası zorunludur'
     }),
-    address: Joi.string().min(10).required().messages({
-      'string.min': 'Adres en az 10 karakter olmalıdır',
-      'any.required': 'İkametgah adresi zorunludur'
-    }),
     university: Joi.string().min(2).required().messages({
       'string.min': 'Üniversite adı en az 2 karakter olmalıdır',
       'any.required': 'Üniversite bilgisi zorunludur'
@@ -66,10 +72,20 @@ class AuthValidator {
       'string.email': 'Geçerli bir e-posta adresi giriniz',
       'any.required': 'E-posta adresi zorunludur'
     }),
-    phone: Joi.string().pattern(/^(05)[0-9]{9}$/).required().messages({
-      'string.pattern.base': 'Geçerli bir telefon numarası giriniz (05xxxxxxxxx)',
-      'any.required': 'Telefon numarası zorunludur'
-    }),
+    phone: Joi.string()
+  .custom((value, helpers) => {
+    const cleaned = value.replace(/[\s\-().]/g, '');
+    const normalized = cleaned.startsWith('5') ? '0' + cleaned : cleaned;
+    if (!/^05[0-9]{9}$/.test(normalized)) {
+      return helpers.error('any.invalid');
+    }
+    return normalized; 
+  })
+  .required()
+  .messages({
+    'any.invalid': 'Geçerli bir telefon numarası giriniz',
+    'any.required': 'Telefon numarası zorunludur'
+  }),
     password: Joi.string().min(6).required().messages({
       'string.min': 'Şifre en az 6 karakter olmalıdır',
       'any.required': 'Şifre zorunludur'
@@ -82,7 +98,7 @@ class AuthValidator {
       'any.only': 'Hesap tipi "individual" veya "corporate" olmalıdır',
       'any.required': 'Hesap tipi zorunludur'
     }),
-    
+
     // BİREYSEL - Conditional fields
     first_name: Joi.when('account_type', {
       is: SENDER_TYPES.INDIVIDUAL,
@@ -99,7 +115,7 @@ class AuthValidator {
       then: Joi.string().pattern(/^[1-9][0-9]{10}$/).required(),
       otherwise: Joi.forbidden()
     }),
-    
+
     // KURUMSAL - Conditional fields
     company_name: Joi.when('account_type', {
       is: SENDER_TYPES.CORPORATE,
@@ -116,7 +132,7 @@ class AuthValidator {
       then: Joi.string().pattern(/^[0-9]{10}$/).required(),
       otherwise: Joi.forbidden()
     }),
-    
+
     // ORTAK ALANLAR
     billing_address: Joi.string().min(10).required().messages({
       'string.min': 'Fatura adresi en az 10 karakter olmalıdır',

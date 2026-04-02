@@ -1,234 +1,253 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { authService } from '../../../services/authService';
-import { PhoneVerificationModal } from '../../../components/common/PhoneVerificationModal';
-import { KvkkModal } from '../../../components/common/KvkkModal';
-import { motion } from 'framer-motion';
-
+import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   BiUser, BiIdCard, BiCalendar, BiEnvelope, BiPhone, 
   BiLockAlt, BiBuilding, BiBook, BiCloudUpload, 
-  BiCreditCard, BiMap, BiCheckCircle, BiLoaderAlt,
-  BiErrorCircle, BiChevronLeft
+  BiCreditCard, BiCheckCircle, BiLoaderAlt,
+  BiErrorCircle, BiChevronLeft, BiShieldQuarter
 } from 'react-icons/bi';
 
-import LogoImage from '../../../assets/yellow_logo.png'; 
+import { PhoneVerificationModal } from '../../../components/common/PhoneVerificationModal';
+import { KvkkModal } from '../../../components/common/KvkkModal';
+import { ISTANBUL_UNIVERSITIES } from '../../../data/istanbul-universities';
+import LogoImage from '../../../assets/yellow_logo.png';
 
-const getErrorMessage = (err) => {
-  const data = err.response?.data;
-  if (data?.errors?.length > 0) return data.errors.map(e => e.message).join(' • ');
-  return data?.message || 'Bir hata oluştu';
-};
-
- const MobileStudentRegister = () => {
-  const [formData, setFormData] = useState({
-    email: '', phone: '', password: '', password_confirm: '',
-    first_name: '', last_name: '', tc_no: '', birth_date: '',
-    iban: '', address: '', university: '', department: '',
-    kvkk_accepted: false, terms_accepted: false,
-  });
-  const [studentDocument, setStudentDocument] = useState(null);
-  const [profilePhoto, setProfilePhoto] = useState(null); 
-  const [showKvkkModal, setShowKvkkModal] = useState(false);
-  const [kvkkModalType, setKvkkModalType] = useState('aydinlatma');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [phoneVerified, setPhoneVerified] = useState(false);
-  const [showPhoneModal, setShowPhoneModal] = useState(false);
-
-
-  
-
+const MobileStudentRegister = ({ 
+  formData, studentDocument, error, loading,
+  phoneVerified, showPhoneModal, showKvkkModal, kvkkModalType,
+  handleChange, handleFileChange, handleSubmit,
+  setShowPhoneModal, setShowKvkkModal, setKvkkModalType, onPhoneVerified
+}) => {
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
-  };
-
-  const handleFileChange = (e, setFile) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) { setError('Dosya boyutu 5MB\'dan büyük olamaz'); return; }
-      setFile(file);
-      setError('');
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!phoneVerified) { setError('Lütfen telefon numaranızı doğrulayın'); return; }
-    if (formData.password !== formData.password_confirm) { setError('Şifreler eşleşmiyor'); return; }
-    if (!profilePhoto || !studentDocument) { setError('Lütfen profil fotoğrafı ve öğrenci belgesini yükleyin'); return; }
-    
-    setLoading(true);
-    try {
-      const data = new FormData();
-      Object.keys(formData).forEach(key => data.append(key, formData[key]));
-      data.append('student_document', studentDocument);
-      data.append('profile_photo', profilePhoto);
-      await authService.registerStudent(data);
-      navigate('/register/success');
-    } catch (err) {
-  setError(getErrorMessage(err));
-} finally {
-      setLoading(false);
-    }
-  };
-
   return (
-    <div className="min-h-screen flex flex-col bg-[#111827] font-sans overflow-x-hidden">
+    <div className="min-h-screen flex flex-col bg-[#0F172A] font-sans antialiased selection:bg-yellow-200">
       
-      {/* ÜST HEADER */}
-      <div className="px-6 pt-12 pb-16 lg:pb-24 relative max-w-7xl mx-auto w-full">
-        <div className="flex justify-between items-center mb-8">
-          <button onClick={() => navigate(-1)} className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 text-white active:scale-90 transition-transform">
-            <BiChevronLeft size={28} />
+      {/* --- HEADER SECTION --- */}
+      <div className="px-8 pt-12 pb-10 relative overflow-hidden">
+        {/* Dekoratif Arka Plan Işığı */}
+        <div className="absolute -top-24 -right-24 w-64 h-64 bg-yellow-400/10 blur-[100px] rounded-full pointer-events-none" />
+        
+        <div className="flex justify-between items-center mb-10">
+          <button 
+            onClick={() => navigate(-1)} 
+            className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 border border-white/10 text-white/80 active:scale-90 transition-all backdrop-blur-md"
+          >
+            <BiChevronLeft size={30} />
           </button>
-          <motion.div initial={{ y: -10, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
-            <img src={LogoImage} alt="Logo" className="h-10 lg:h-12 w-auto object-contain" />
-          </motion.div>
-          <div className="w-10"></div>
+          <img src={LogoImage} alt="Logo" className="h-6 w-auto opacity-90 brightness-200 grayscale" />
+          <div className="w-12" />
         </div>
 
-        <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="text-center lg:text-left">
-          <h1 className="text-3xl lg:text-4xl font-bold text-white mb-2">Öğrenci Kaydı</h1>
+        <motion.div 
+          initial={{ opacity: 0, x: -20 }} 
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <h1 className="text-3xl font-light text-white tracking-tight leading-tight">
+            Hesabını <span className="font-semibold text-yellow-400">Oluştur</span>
+          </h1>
+          <p className="text-slate-400 text-sm mt-3 flex items-center gap-2">
+            <span className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+            Yaklaşık 4 dakika sürecek.
+          </p>
         </motion.div>
       </div>
 
-      {/* FORM KARTI */}
+      {/* --- FORM SECTION --- */}
       <motion.div 
-        initial={{ y: 100 }} animate={{ y: 0 }}
-        transition={{ type: "spring", damping: 25, stiffness: 200 }}
-        className="flex-1 bg-white rounded-t-[40px] lg:rounded-[40px] px-6 lg:px-12 pt-10 pb-12 shadow-2xl mt-[-30px] z-10 w-full lg:max-w-4xl lg:mx-auto lg:mb-10"
+        initial={{ y: "100%" }} 
+        animate={{ y: 0 }} 
+        transition={{ type: "spring", damping: 30, stiffness: 120 }}
+        className="flex-1 bg-[#F8FAFC] rounded-t-[45px] px-8 pt-12 pb-12 shadow-[0_-25px_60px_rgba(0,0,0,0.3)] z-10"
       >
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {error && (
-            <div className="p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-xs font-bold flex items-center gap-2 uppercase tracking-tight">
-              <BiErrorCircle size={20} /> {error}
-            </div>
-          )}
+        <form onSubmit={handleSubmit} className="space-y-10 max-w-md mx-auto">
+          
+          <AnimatePresence>
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }} 
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                className="p-4 rounded-2xl bg-red-50 border border-red-100 text-red-700 text-xs font-bold flex items-center gap-3 shadow-sm"
+              >
+                <BiErrorCircle size={22} className="shrink-0" />
+                <span className="uppercase tracking-tight">{error}</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          {/* 1. PROFİL FOTOĞRAFI (BAŞTA) */}
-          <div className="max-w-sm mx-auto">
-             <FileUpload label="PROFİL FOTOĞRAFI" icon={<BiUser size={24}/>} file={profilePhoto} id="profile_photo" onChange={(e) => handleFileChange(e, setProfilePhoto)} />
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 border-t border-gray-50 pt-6">
-            <p className="lg:col-span-2 text-[10px] font-black text-gray-400 tracking-[0.2em] mb-2 uppercase">Kişisel Bilgiler</p>
-            <ModernInput icon={<BiUser />} label="AD" name="first_name" value={formData.first_name} onChange={handleChange} placeholder="Adınız" />
-            <ModernInput icon={<BiUser />} label="SOYAD" name="last_name" value={formData.last_name} onChange={handleChange} placeholder="Soyadınız" />
-            <ModernInput icon={<BiIdCard />} label="TC KİMLİK" name="tc_no" value={formData.tc_no} onChange={handleChange} maxLength="11" placeholder="11 haneli" />
-            <ModernInput icon={<BiCalendar />} label="DOĞUM TARİHİ" name="birth_date" type="date" value={formData.birth_date} onChange={handleChange} />
-            
-            <p className="lg:col-span-2 text-[10px] font-black text-gray-400 tracking-[0.2em] mt-4 mb-2 uppercase">Eğitim Bilgileri</p>
-            <ModernInput icon={<BiBuilding />} label="ÜNİVERSİTE" name="university" value={formData.university} onChange={handleChange} placeholder="Üniversiteniz" />
-            <ModernInput icon={<BiBook />} label="BÖLÜM" name="department" value={formData.department} onChange={handleChange} placeholder="Bölümünüz" />
-            
-            {/* ÖĞRENCİ BELGESİ (Eğitim Kısmının Altı) */}
-            <div className="lg:col-span-2 py-2">
-                <FileUpload label="ÖĞRENCİ BELGESİ (PDF veya JPG)" icon={<BiCloudUpload size={24}/>} file={studentDocument} id="student_doc" onChange={(e) => handleFileChange(e, setStudentDocument)} />
+          {/* Grup 1: Kimlik */}
+          <section className="space-y-4">
+            <FormSectionTitle title="Kişisel Bilgiler" />
+            <div className="space-y-4">
+              <CorporateInput icon={<BiUser />} label="AD" name="first_name" value={formData.first_name} onChange={handleChange} placeholder="Adınız" />
+              <CorporateInput icon={<BiUser />} label="SOYAD" name="last_name" value={formData.last_name} onChange={handleChange} placeholder="Soyadınız" />
+              <CorporateInput icon={<BiIdCard />} label="T.C. KİMLİK NUMARASI" name="tc_no" value={formData.tc_no} onChange={handleChange} maxLength="11" placeholder="00000000000" inputMode="numeric" />
+              <CorporateInput icon={<BiCalendar />} label="DOĞUM TARİHİ" name="birth_date" type="date" value={formData.birth_date} onChange={handleChange} />
             </div>
+          </section>
 
-            <p className="lg:col-span-2 text-[10px] font-black text-gray-400 tracking-[0.2em] mt-4 mb-2 uppercase">İletişim Bilgileri</p>
-            <ModernInput icon={<BiEnvelope />} label="E-POSTA" name="email" type="email" value={formData.email} onChange={handleChange} placeholder="ornek@edu.tr" />
-            
-            <div className="flex gap-2 items-end">
-              <div className="flex-1">
-                <ModernInput icon={<BiPhone />} label="TELEFON" name="phone" type="tel" value={formData.phone} onChange={handleChange} placeholder="05XX..." />
-              </div>
-              {!phoneVerified && (
-                <button type="button" onClick={() => setShowPhoneModal(true)} className="bg-gray-900 text-white p-4 rounded-2xl hover:bg-black active:scale-95 transition-all">
-                  <BiCheckCircle size={24} />
-                </button>
-              )}
+          {/* Grup 2: Eğitim */}
+          <section className="space-y-4">
+            <FormSectionTitle title="Akademik Doğrulama" />
+            <div className="space-y-4">
+              <CorporateSelect value={formData.university} onChange={handleChange} />
+              <CorporateInput icon={<BiBook />} label="BÖLÜM" name="department" value={formData.department} onChange={handleChange} placeholder="Örn: Endüstriyel Tasarım" />
+              <CorporateFileUpload file={studentDocument} onChange={handleFileChange} id="student_doc" label="E-Devlet Öğrenci Belgesi" />
             </div>
+          </section>
 
-            <p className="lg:col-span-2 text-[10px] font-black text-gray-400 tracking-[0.2em] mt-4 mb-2 uppercase">Ödeme & Adres</p>
-            <div className="lg:col-span-2">
-              <ModernInput icon={<BiCreditCard />} label="IBAN NUMARASI" name="iban" value={formData.iban} onChange={handleChange} placeholder="TR00..." />
-            </div>
-            <div className="lg:col-span-2">
-              <div className="border border-gray-100 rounded-2xl p-3 shadow-sm focus-within:ring-2 focus-within:ring-yellow-400/50 transition-all bg-white text-gray-800">
-                <label className="block text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-1 ml-1">İKAMETGAH ADRESİ</label>
-                <div className="flex gap-3">
-                  <BiMap className="text-gray-400 mt-1" size={20} />
-                  <textarea name="address" rows="2" className="w-full bg-transparent text-sm font-semibold outline-none placeholder-gray-300 resize-none" placeholder="Açık adresiniz..." value={formData.address} onChange={handleChange} />
+          {/* Grup 3: İletişim & Finans */}
+          <section className="space-y-4">
+            <FormSectionTitle title="İletişim ve Ödeme" />
+            <div className="space-y-4">
+              <CorporateInput icon={<BiEnvelope />} label="KURUMSAL / ŞAHSİ E-POSTA" name="email" type="email" value={formData.email} onChange={handleChange} placeholder="eposta@adresiniz.com" />
+              <div className="flex gap-3 items-end">
+                <div className="flex-1">
+                  <CorporateInput icon={<BiPhone />} label="GSM NUMARASI" name="phone" type="tel" value={formData.phone} onChange={handleChange} placeholder="05XX" />
                 </div>
+                <button 
+                  type="button" 
+                  onClick={() => setShowPhoneModal(true)}
+                  className={`p-4 rounded-2xl border transition-all active:scale-95 shadow-sm ${phoneVerified ? 'bg-green-50 border-green-200 text-green-600' : 'bg-slate-900 border-slate-900 text-white hover:bg-black'}`}
+                >
+                  <BiCheckCircle size={28} />
+                </button>
               </div>
+              <CorporateInput icon={<BiCreditCard />} label="IBAN (HARÇLIK ÖDEMELERİ İÇİN)" name="iban" value={formData.iban} onChange={handleChange} placeholder="TR00..." />
             </div>
+          </section>
 
-            <p className="lg:col-span-2 text-[10px] font-black text-gray-400 tracking-[0.2em] mt-4 mb-2 uppercase">Güvenlik</p>
-            <ModernInput icon={<BiLockAlt />} label="ŞİFRE" name="password" type="password" value={formData.password} onChange={handleChange} placeholder="••••" />
-            <ModernInput icon={<BiLockAlt />} label="TEKRAR" name="password_confirm" type="password" value={formData.password_confirm} onChange={handleChange} placeholder="••••" />
+          {/* Grup 4: Güvenlik */}
+          <section className="space-y-4">
+            <FormSectionTitle title="Hesap Güvenliği" />
+            <div className="space-y-4">
+              <CorporateInput icon={<BiLockAlt />} label="GİRİŞ ŞİFRESİ" name="password" type="password" value={formData.password} onChange={handleChange} placeholder="••••••••" />
+              <CorporateInput icon={<BiLockAlt />} label="ŞİFRE TEKRAR" name="password_confirm" type="password" value={formData.password_confirm} onChange={handleChange} placeholder="••••••••" />
+            </div>
+          </section>
+
+          {/* Onaylar */}
+          <div className="py-6 space-y-4 bg-slate-50 rounded-3xl p-6 border border-slate-100">
+            <CorporateCheckbox label="KVKK Aydınlatma Metni" name="kvkk_accepted" checked={formData.kvkk_accepted} onChange={handleChange} onDetailClick={() => { setKvkkModalType('aydinlatma'); setShowKvkkModal(true); }} />
+            <CorporateCheckbox label="Kullanım Koşulları" name="terms_accepted" checked={formData.terms_accepted} onChange={handleChange} onDetailClick={() => { setKvkkModalType('kosullar'); setShowKvkkModal(true); }} />
           </div>
 
-          {/* ONAYLAR VE BUTON */}
-          <div className="max-w-md mx-auto space-y-4 pt-8 border-t border-gray-50">
-            <ApprovalCheckbox label="KVKK AYDINLATMA METNİ" onClick={() => { setKvkkModalType('aydinlatma'); setShowKvkkModal(true); }} checked={formData.kvkk_accepted} onChange={handleChange} name="kvkk_accepted" />
-            <ApprovalCheckbox label="KULLANIM KOŞULLARI" onClick={() => { setKvkkModalType('kosullar'); setShowKvkkModal(true); }} checked={formData.terms_accepted} onChange={handleChange} name="terms_accepted" />
-
-            <button type="submit" disabled={loading} className="w-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-extrabold rounded-2xl py-5 transition-all active:scale-[0.98] shadow-xl shadow-yellow-400/20 uppercase tracking-widest text-sm">
-              {loading ? <BiLoaderAlt className="animate-spin" size={24} /> : "Kaydı Tamamla"}
+          {/* Submit */}
+          <div className="sticky bottom-4">
+            <button 
+              type="submit" 
+              disabled={loading}
+              className="w-full bg-[#1E293B] hover:bg-[#0F172A] disabled:bg-slate-400 text-white font-bold rounded-2xl py-5 transition-all active:scale-[0.98] shadow-2xl shadow-slate-300 uppercase tracking-[0.2em] text-sm flex items-center justify-center gap-3"
+            >
+              {loading ? <BiLoaderAlt className="animate-spin" size={24} /> : (
+                <>
+                  <span>Kaydı Tamamla</span>
+                  <BiShieldQuarter className="text-yellow-400" size={20} />
+                </>
+              )}
             </button>
-            <p className="text-center text-[10px] font-bold text-gray-400 pt-2 tracking-widest uppercase">
-              Zaten hesabın var mı? <Link to="/login" className="text-yellow-600 hover:underline">Giriş Yap</Link>
-            </p>
           </div>
+
+          <p className="text-center text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+            Zaten üye misin? <Link to="/login" className="text-slate-900 border-b-2 border-yellow-400 pb-0.5 ml-1">Giriş Yap</Link>
+          </p>
         </form>
       </motion.div>
 
-      <PhoneVerificationModal isOpen={showPhoneModal} phoneNumber={formData.phone} onVerified={() => { setPhoneVerified(true); setShowPhoneModal(false); }} onClose={() => setShowPhoneModal(false)} />
+      <PhoneVerificationModal isOpen={showPhoneModal} phoneNumber={formData.phone} onVerified={onPhoneVerified} onClose={() => setShowPhoneModal(false)} />
       <KvkkModal isOpen={showKvkkModal} onClose={() => setShowKvkkModal(false)} type={kvkkModalType} />
     </div>
   );
 };
 
-// --- YARDIMCI BİLEŞENLER ---
+// --- ÖZEL KURUMSAL BİLEŞENLER ---
 
-const ModernInput = ({ icon, label, name, type = "text", value, onChange, placeholder, maxLength }) => (
-  <div className="border border-gray-100 rounded-2xl p-3 shadow-sm focus-within:ring-2 focus-within:ring-yellow-400/50 transition-all bg-white h-full">
-    <label className="block text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-0.5 ml-1">{label}</label>
-    <div className="flex items-center gap-3">
-      <span className="text-gray-400">{icon}</span>
-      <input type={type} name={name} required maxLength={maxLength} className="w-full bg-transparent text-sm font-semibold text-gray-800 outline-none placeholder-gray-300" placeholder={placeholder} value={value} onChange={onChange} />
+const FormSectionTitle = ({ title }) => (
+  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] pl-1 border-l-2 border-yellow-400 ml-1 leading-none h-3 items-center flex">
+    {title}
+  </h3>
+);
+
+const CorporateInput = ({ icon, label, name, type = "text", value, onChange, placeholder, maxLength, inputMode }) => (
+  <div className="group transition-all">
+    <label className="block text-[9px] font-black text-slate-500 mb-1.5 ml-1 uppercase tracking-widest">{label}</label>
+    <div className="relative flex items-center">
+      <div className="absolute left-4 text-slate-300 group-focus-within:text-yellow-500 transition-colors">
+        {React.cloneElement(icon, { size: 20 })}
+      </div>
+      <input 
+        type={type} name={name} required maxLength={maxLength} inputMode={inputMode}
+        value={value} onChange={onChange} placeholder={placeholder}
+        className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4 text-sm font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-300 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-400/5 shadow-sm"
+      />
     </div>
   </div>
 );
 
-const FileUpload = ({ label, icon, file, id, onChange }) => (
-  <div className="group">
-    <label className="block text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-2 ml-1">{label}</label>
-    <div className={`border-2 border-dashed rounded-2xl p-6 text-center transition-all cursor-pointer ${file ? 'border-green-400 bg-green-50' : 'border-gray-100 hover:border-yellow-400 bg-white'}`}>
-      <input type="file" onChange={onChange} className="hidden" id={id} />
-      <label htmlFor={id} className="cursor-pointer flex flex-col items-center">
-        {file ? (
-          <div className="text-green-600 flex flex-col items-center">
-            <BiCheckCircle size={32} />
-            <span className="text-[11px] font-bold mt-2 truncate w-full px-2">{file.name}</span>
-          </div>
-        ) : (
-          <div className="text-gray-400 flex flex-col items-center group-hover:text-yellow-600">
-            {icon}
-            <span className="text-[11px] font-bold mt-2 uppercase">Belge Seç</span>
-          </div>
-        )}
-      </label>
+const CorporateSelect = ({ value, onChange }) => (
+  <div className="group transition-all">
+    <label className="block text-[9px] font-black text-slate-500 mb-1.5 ml-1 uppercase tracking-widest">ÜNİVERSİTE</label>
+    <div className="relative flex items-center">
+      <div className="absolute left-4 text-slate-300 group-focus-within:text-yellow-500 transition-colors">
+        <BiBuilding size={20} />
+      </div>
+      <select 
+        name="university" required value={value} onChange={onChange}
+        className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-10 text-sm font-semibold text-slate-800 outline-none appearance-none focus:border-yellow-400 focus:ring-4 focus:ring-yellow-400/5 shadow-sm"
+      >
+        <option value="">Üniversite Seçiniz</option>
+        {ISTANBUL_UNIVERSITIES.map(uni => <option key={uni} value={uni}>{uni}</option>)}
+      </select>
+      <div className="absolute right-4 pointer-events-none text-slate-400">
+        <BiChevronLeft size={20} className="-rotate-90" />
+      </div>
     </div>
   </div>
 );
 
-const ApprovalCheckbox = ({ name, checked, onChange, label, onClick }) => (
-  <div className="flex items-center gap-3">
-    <label className="relative flex items-center cursor-pointer">
-      <input type="checkbox" name={name} checked={checked} onChange={onChange} className="peer h-5 w-5 appearance-none rounded-lg border-2 border-gray-100 checked:bg-yellow-400 checked:border-yellow-400" />
-      <BiCheckCircle className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100" size={14} />
+const CorporateFileUpload = ({ file, id, onChange, label }) => (
+  <div className="relative">
+    <label className="block text-[9px] font-black text-slate-500 mb-1.5 ml-1 uppercase tracking-widest">{label}</label>
+    <label 
+      htmlFor={id}
+      className={`flex items-center justify-between p-4 border-2 border-dashed rounded-2xl cursor-pointer transition-all ${file ? 'bg-green-50 border-green-200' : 'bg-white border-slate-100 hover:border-yellow-400 hover:bg-yellow-50/30'}`}
+    >
+      <div className="flex items-center gap-3">
+        <div className={`p-2 rounded-xl ${file ? 'bg-green-100 text-green-600' : 'bg-slate-50 text-slate-400'}`}>
+          <BiCloudUpload size={24} />
+        </div>
+        <div>
+          <p className="text-[11px] font-bold text-slate-700 uppercase tracking-tight">
+            {file ? "Belge Yüklendi" : "Belge Seç"}
+          </p>
+          <p className="text-[9px] text-slate-400 uppercase tracking-tighter">
+            {file ? file.name : "PDF, PNG veya JPG"}
+          </p>
+        </div>
+      </div>
+      {file && <BiCheckCircle className="text-green-500" size={24} />}
+      <input type="file" id={id} onChange={onChange} className="hidden" />
     </label>
-    <button type="button" onClick={onClick} className="text-[10px] font-bold text-gray-400 hover:text-yellow-600 uppercase tracking-tighter text-left">
-      {label} <span className="underline italic lowercase text-blue-400">(Oku ve Onayla)</span>
-    </button>
   </div>
 );
 
+const CorporateCheckbox = ({ label, checked, onChange, name, onDetailClick }) => (
+  <div className="flex items-start gap-3">
+    <label className="relative flex items-center cursor-pointer mt-0.5">
+      <input 
+        type="checkbox" name={name} checked={checked} onChange={onChange}
+        className="peer h-5 w-5 appearance-none rounded-md border-2 border-slate-200 checked:bg-yellow-400 checked:border-yellow-400 transition-all shadow-sm" 
+      />
+      <BiCheckCircle className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-slate-900 opacity-0 peer-checked:opacity-100 transition-opacity" size={14} />
+    </label>
+    <p className="text-[10px] text-slate-500 font-medium leading-tight">
+      {label} okudum ve kabul ediyorum. 
+      <button type="button" onClick={onDetailClick} className="ml-1 text-slate-900 font-bold underline decoration-yellow-400 underline-offset-2">İncele</button>
+    </p>
+  </div>
+);
 
-export default MobileStudentRegister
+export default MobileStudentRegister;

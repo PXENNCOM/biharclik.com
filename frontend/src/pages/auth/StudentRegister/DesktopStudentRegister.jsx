@@ -1,134 +1,41 @@
-import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { authService } from '../../../services/authService';
 import { PhoneVerificationModal } from '../../../components/common/PhoneVerificationModal';
 import { KvkkModal } from '../../../components/common/KvkkModal';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { ISTANBUL_UNIVERSITIES } from '../../../data/istanbul-universities';
 
-// ✨ BoxIcons
 import { 
   BiUser, BiIdCard, BiCalendar, BiEnvelope, BiPhone, 
   BiLockAlt, BiBuilding, BiBook, BiCloudUpload, 
-  BiCreditCard, BiMap, BiCheckCircle, BiRightArrowAlt, 
+  BiCreditCard, BiCheckCircle, BiRightArrowAlt, 
   BiLoaderAlt, BiErrorCircle 
 } from 'react-icons/bi';
 
-// 🖼️ Görseller
 import LogoImage from '../../../assets/yellow_logo.png'; 
 import HeroImage from '../../../assets/login-hero.png'; 
 
-const getErrorMessage = (err) => {
-  const data = err.response?.data;
-  if (data?.errors?.length > 0) return data.errors.map(e => e.message).join(' • ');
-  return data?.message || 'Bir hata oluştu';
-};
-
-const DesktopStudentRegister = () => {
-  const [formData, setFormData] = useState({
-    email: '',
-    phone: '',
-    password: '',
-    password_confirm: '',
-    first_name: '',
-    last_name: '',
-    tc_no: '',
-    birth_date: '',
-    iban: '',
-    address: '',
-    university: '',
-    department: '',
-    kvkk_accepted: false,
-    terms_accepted: false,
-  });
-
-  const [studentDocument, setStudentDocument] = useState(null);
-  const [profilePhoto, setProfilePhoto] = useState(null); 
-  const [showKvkkModal, setShowKvkkModal] = useState(false);
-  const [kvkkModalType, setKvkkModalType] = useState('aydinlatma');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  
-  // Telefon doğrulama ve Modal durumları
-  const [phoneVerified, setPhoneVerified] = useState(false);
-  const [showPhoneModal, setShowPhoneModal] = useState(false);
-
-  const navigate = useNavigate();
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
-
-  const handleFileChange = (e, setFile) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setError('Dosya boyutu 5MB\'dan büyük olamaz');
-        return;
-      }
-      setFile(file);
-      setError('');
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-
-    // Validasyonlar
-    if (!phoneVerified) { setError('Lütfen telefon numaranızı doğrulayın'); return; }
-    if (formData.password !== formData.password_confirm) { setError('Şifreler eşleşmiyor'); return; }
-    if (!profilePhoto || !studentDocument) { setError('Lütfen profil fotoğrafı ve öğrenci belgesini yükleyin'); return; }
-    if (!formData.kvkk_accepted || !formData.terms_accepted) { setError('Lütfen yasal metinleri onaylayın'); return; }
-
-    setLoading(true);
-
-    try {
-      const data = new FormData();
-      Object.keys(formData).forEach(key => data.append(key, formData[key]));
-      data.append('student_document', studentDocument);
-      data.append('profile_photo', profilePhoto);
-
-      await authService.registerStudent(data);
-      navigate('/register/success');
-    } catch (err) {
-  setError(getErrorMessage(err));
-} finally {
-      setLoading(false);
-    }
-  };
-
+const DesktopStudentRegister = ({ 
+  formData, studentDocument, error, loading,
+  phoneVerified, showPhoneModal, showKvkkModal, kvkkModalType,
+  handleChange, handleFileChange, handleSubmit,
+  setShowPhoneModal, setShowKvkkModal, setKvkkModalType, onPhoneVerified
+}) => {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-white font-sans text-gray-900 overflow-x-hidden">
       
-      {/* --- SOL TARAF: MARKA ALANI --- */}
+      {/* SOL: MARKA */}
       <div className="lg:w-5/12 bg-gray-900 text-white flex flex-col relative overflow-hidden min-h-[300px] lg:min-h-screen lg:fixed lg:left-0 lg:top-0 lg:h-full z-10">
-        <img 
-          src={HeroImage} 
-          alt="Öğrenci Kurye" 
-          className="absolute inset-0 w-full h-full object-cover z-0 opacity-60"
-        />
+        <img src={HeroImage} alt="Öğrenci Kurye" className="absolute inset-0 w-full h-full object-cover z-0 opacity-60" />
         <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/50 to-transparent z-10"></div>
-        
         <div className="relative z-20 flex-1 flex flex-col items-center justify-center p-12 text-center">
-          <motion.img 
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            src={LogoImage} 
-            alt="Logo" 
-            className="w-48 h-auto mb-6 drop-shadow-2xl"
-          />
+          <motion.img initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} src={LogoImage} alt="Logo" className="w-48 h-auto mb-6 drop-shadow-2xl" />
         </div>
-
         <div className="relative z-20 text-[10px] text-gray-500 font-bold text-center pb-8 tracking-[0.3em]">
           © 2026 BİHARÇLIK • Campus On-The-Go
         </div>
       </div>
 
-      {/* --- SAĞ TARAF: FORM ALANI --- */}
+      {/* SAĞ: FORM */}
       <div className="lg:w-7/12 lg:ml-[41.666%] w-full bg-white min-h-screen flex items-center justify-center py-16 px-6 sm:px-12">
         <div className="w-full max-w-2xl">
           
@@ -143,17 +50,6 @@ const DesktopStudentRegister = () => {
                 <BiErrorCircle size={24} /> {error}
               </motion.div>
             )}
-
-            {/* PROFIL FOTOĞRAFI YÜKLEME */}
-            <section>
-               <FileSelect 
-                id="profile_photo" 
-                label="PROFİL FOTOĞRAFIN" 
-                icon={<BiUser size={32}/>} 
-                file={profilePhoto} 
-                onChange={(e) => handleFileChange(e, setProfilePhoto)} 
-               />
-            </section>
 
             {/* KİŞİSEL BİLGİLER */}
             <section className="space-y-6 pt-4 border-t border-gray-50">
@@ -170,7 +66,7 @@ const DesktopStudentRegister = () => {
             <section className="space-y-6 pt-6 border-t border-gray-100">
               <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Eğitim Bilgileri</label>
               <div className="grid grid-cols-2 gap-5 mb-6">
-                <InputGroup icon={<BiBuilding />} label="ÜNİVERSİTE" name="university" value={formData.university} onChange={handleChange} placeholder="Üniversiteniz" />
+                <UniversitySelect value={formData.university} onChange={handleChange} />
                 <InputGroup icon={<BiBook />} label="BÖLÜM" name="department" value={formData.department} onChange={handleChange} placeholder="Bölümünüz" />
               </div>
               <FileSelect 
@@ -178,26 +74,19 @@ const DesktopStudentRegister = () => {
                 label="ÖĞRENCİ BELGESİ (PDF veya JPG)" 
                 icon={<BiCloudUpload size={32}/>} 
                 file={studentDocument} 
-                onChange={(e) => handleFileChange(e, setStudentDocument)} 
+                onChange={handleFileChange} 
               />
             </section>
 
             {/* İLETİŞİM & DOĞRULAMA */}
             <section className="space-y-6 pt-6 border-t border-gray-100">
               <div className="grid grid-cols-2 gap-5">
-                <InputGroup icon={<BiEnvelope />} label="E-POSTA (ÜNİVERSİTE)" name="email" type="email" value={formData.email} onChange={handleChange} placeholder="ornek@edu.tr" />
+                <InputGroup icon={<BiEnvelope />} label="E-POSTA" name="email" type="email" value={formData.email} onChange={handleChange} placeholder="ornek@edu.tr" />
                 <InputGroup icon={<BiPhone />} label="TELEFON" name="phone" type="tel" value={formData.phone} onChange={handleChange} placeholder="05XX XXX XX XX" />
               </div>
-
               {!phoneVerified ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if(formData.phone.length < 10) { setError("Lütfen geçerli bir telefon giriniz."); return; }
-                    setShowPhoneModal(true);
-                  }}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-blue-200 flex items-center justify-center gap-2"
-                >
+                <button type="button" onClick={() => setShowPhoneModal(true)}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-blue-200 flex items-center justify-center gap-2">
                   <BiPhone size={20} /> Telefonu Doğrula
                 </button>
               ) : (
@@ -207,23 +96,9 @@ const DesktopStudentRegister = () => {
               )}
             </section>
 
-            {/* ÖDEME & ADRES */}
+            {/* ÖDEME */}
             <section className="space-y-6 pt-6 border-t border-gray-100">
               <InputGroup icon={<BiCreditCard />} label="IBAN NUMARASI" name="iban" value={formData.iban} onChange={handleChange} placeholder="TR00 0000..." />
-              <div className="group">
-                <label className="block text-[11px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">İKAMETGAH ADRESİ</label>
-                <div className="relative">
-                  <BiMap className="absolute top-4 left-4 text-gray-400" size={20} />
-                  <textarea 
-                    name="address" 
-                    rows="3" 
-                    className="w-full bg-white text-gray-900 text-sm rounded-2xl border-2 border-gray-100 focus:border-yellow-400 block pl-12 p-4 transition-all outline-none font-bold placeholder-gray-300 shadow-sm resize-none"
-                    placeholder="Tam adresinizi giriniz..."
-                    value={formData.address}
-                    onChange={handleChange}
-                  />
-                </div>
-              </div>
             </section>
 
             {/* GÜVENLİK */}
@@ -234,28 +109,12 @@ const DesktopStudentRegister = () => {
 
             {/* ONAYLAR */}
             <div className="space-y-4 pt-4 bg-gray-50 p-6 rounded-3xl border border-gray-100">
-              <ApprovalLink 
-                checked={formData.kvkk_accepted} 
-                name="kvkk_accepted" 
-                onChange={handleChange}
-                label="KVKK Aydınlatma Metni'ni" 
-                onClick={() => { setKvkkModalType('aydinlatma'); setShowKvkkModal(true); }}
-              />
-              <ApprovalLink 
-                checked={formData.terms_accepted} 
-                name="terms_accepted" 
-                onChange={handleChange}
-                label="Kullanım Koşulları'nı" 
-                onClick={() => { setKvkkModalType('kosullar'); setShowKvkkModal(true); }}
-              />
+              <ApprovalLink checked={formData.kvkk_accepted} name="kvkk_accepted" onChange={handleChange} label="KVKK Aydınlatma Metni'ni" onClick={() => { setKvkkModalType('aydinlatma'); setShowKvkkModal(true); }} />
+              <ApprovalLink checked={formData.terms_accepted} name="terms_accepted" onChange={handleChange} label="Kullanım Koşulları'nı" onClick={() => { setKvkkModalType('kosullar'); setShowKvkkModal(true); }} />
             </div>
 
-            {/* SUBMIT BUTONU */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gray-900 hover:bg-black text-white font-black rounded-2xl py-5 shadow-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-3 text-lg tracking-tight disabled:opacity-50"
-            >
+            <button type="submit" disabled={loading}
+              className="w-full bg-gray-900 hover:bg-black text-white font-black rounded-2xl py-5 shadow-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-3 text-lg tracking-tight disabled:opacity-50">
               {loading ? <BiLoaderAlt className="animate-spin" size={24} /> : <>KAYDI TAMAMLA <BiRightArrowAlt size={24} /></>}
             </button>
 
@@ -268,24 +127,13 @@ const DesktopStudentRegister = () => {
         </div>
       </div>
 
-      {/* MODALLAR */}
-      <PhoneVerificationModal 
-        isOpen={showPhoneModal} 
-        phoneNumber={formData.phone} 
-        onVerified={() => { setPhoneVerified(true); setShowPhoneModal(false); }} 
-        onClose={() => setShowPhoneModal(false)} 
-      />
-      
-      <KvkkModal 
-        isOpen={showKvkkModal} 
-        onClose={() => setShowKvkkModal(false)} 
-        type={kvkkModalType} 
-      />
+      <PhoneVerificationModal isOpen={showPhoneModal} phoneNumber={formData.phone} onVerified={onPhoneVerified} onClose={() => setShowPhoneModal(false)} />
+      <KvkkModal isOpen={showKvkkModal} onClose={() => setShowKvkkModal(false)} type={kvkkModalType} />
     </div>
   );
 };
 
-// --- EKSİKSİZ ALT BİLEŞENLER ---
+// ALT BİLEŞENLER
 
 const InputGroup = ({ icon, label, name, type = "text", value, onChange, placeholder, maxLength }) => (
   <div className="group">
@@ -294,16 +142,24 @@ const InputGroup = ({ icon, label, name, type = "text", value, onChange, placeho
       <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-yellow-500 transition-colors">
         {icon}
       </div>
-      <input
-        type={type}
-        name={name}
-        required
-        maxLength={maxLength}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        className="w-full bg-white text-gray-900 text-sm rounded-2xl border-2 border-gray-100 focus:border-yellow-400 block pl-12 p-4 transition-all outline-none font-bold placeholder-gray-300 shadow-sm focus:shadow-yellow-100"
-      />
+      <input type={type} name={name} required maxLength={maxLength} value={value} onChange={onChange} placeholder={placeholder}
+        className="w-full bg-white text-gray-900 text-sm rounded-2xl border-2 border-gray-100 focus:border-yellow-400 block pl-12 p-4 transition-all outline-none font-bold placeholder-gray-300 shadow-sm" />
+    </div>
+  </div>
+);
+
+const UniversitySelect = ({ value, onChange }) => (
+  <div className="group">
+    <label className="block text-[11px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">ÜNİVERSİTE</label>
+    <div className="relative">
+      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-yellow-500 transition-colors">
+        <BiBuilding />
+      </div>
+      <select name="university" required value={value} onChange={onChange}
+        className="w-full bg-white text-gray-900 text-sm rounded-2xl border-2 border-gray-100 focus:border-yellow-400 block pl-12 p-4 transition-all outline-none font-bold shadow-sm appearance-none">
+        <option value="">Üniversite seçin...</option>
+        {ISTANBUL_UNIVERSITIES.map(uni => <option key={uni} value={uni}>{uni}</option>)}
+      </select>
     </div>
   </div>
 );
@@ -335,13 +191,8 @@ const FileSelect = ({ id, label, icon, file, onChange }) => (
 const ApprovalLink = ({ checked, name, onChange, label, onClick }) => (
   <label className="flex items-center gap-4 cursor-pointer group select-none">
     <div className="relative flex items-center">
-      <input 
-        type="checkbox" 
-        name={name} 
-        checked={checked} 
-        onChange={onChange}
-        className="peer h-6 w-6 appearance-none rounded-xl border-2 border-gray-200 checked:bg-yellow-400 checked:border-yellow-400 transition-all cursor-pointer" 
-      />
+      <input type="checkbox" name={name} checked={checked} onChange={onChange}
+        className="peer h-6 w-6 appearance-none rounded-xl border-2 border-gray-200 checked:bg-yellow-400 checked:border-yellow-400 transition-all cursor-pointer" />
       <BiCheckCircle className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100 pointer-events-none" size={16} />
     </div>
     <span className="text-xs font-bold text-gray-600 group-hover:text-gray-900 transition-colors uppercase tracking-tight leading-relaxed">
