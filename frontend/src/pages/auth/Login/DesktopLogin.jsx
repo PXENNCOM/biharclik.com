@@ -150,14 +150,14 @@ const DesktopLogin = () => {
             <p className="text-center text-sm text-gray-500 mb-4 font-medium">Henüz bir hesabınız yok mu?</p>
             <div className="grid grid-cols-2 gap-3">
               <Link
-                to="/register/student"
+                to="/hesap-olustur/ogrenci"
                 className="flex items-center justify-center gap-2 p-3 rounded-xl border border-gray-200 text-gray-700 font-bold hover:border-yellow-400 hover:bg-yellow-50 transition-colors group"
               >
                 <BiUser className="text-gray-400 group-hover:text-yellow-600 transition-colors" size={20} />
                 <span>Öğrenci</span>
               </Link>
               <Link
-                to="/register/sender"
+                to="/hesap-olustur/gonderici"
                 className="flex items-center justify-center gap-2 p-3 rounded-xl border border-gray-200 text-gray-700 font-bold hover:border-blue-400 hover:bg-blue-50 transition-colors group"
               >
                 <BiPackage className="text-gray-400 group-hover:text-blue-600 transition-colors" size={20} />

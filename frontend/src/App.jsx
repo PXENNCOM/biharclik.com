@@ -41,8 +41,8 @@ function AppRoutes() {
     <Routes>
       {/* Public Routes */}
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/register/student" element={<StudentRegisterPage />} />
-      <Route path="/register/sender" element={<SenderRegisterPage />} />
+      <Route path="/hesap-olustur/ogrenci" element={<StudentRegisterPage />} />
+      <Route path="/hesap-olustur/gonderici" element={<SenderRegisterPage />} />
       <Route path="/register/success" element={<RegisterSuccessPage />} />
 
       {/* Student Routes */}

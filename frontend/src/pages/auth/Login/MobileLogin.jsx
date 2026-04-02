@@ -179,7 +179,7 @@ const MobileLogin = () => {
           <div className="space-y-6">
             <div className="space-y-3.5 mx-auto max-w-sm">
               <Link
-                to="/register/student"
+                to="/hesap-olustur/ogrenci"
                 className="group relative w-full flex items-center justify-between p-2.5 pr-5 rounded-3xl bg-white border border-slate-100 shadow-sm active:scale-[0.97] transition-all duration-300 hover:border-yellow-400 hover:shadow-lg hover:shadow-yellow-400/5 hover:-translate-y-0.5 overflow-hidden"
               >
                 <div className="absolute top-0 right-0 w-24 h-24 bg-yellow-400/5 blur-[50px] rounded-full group-hover:bg-yellow-400/10 transition-colors" />
@@ -201,7 +201,7 @@ const MobileLogin = () => {
               </Link>
 
               <Link
-                to="/register/sender"
+                to="/hesap-olustur/gonderici"
                 className="group relative w-full flex items-center justify-between p-2.5 pr-5 rounded-3xl bg-white border border-slate-100 shadow-sm active:scale-[0.97] transition-all duration-300 hover:border-slate-900 hover:shadow-lg hover:shadow-slate-900/5 hover:-translate-y-0.5 overflow-hidden"
               >
                 {/* Arka plan efekti */}
