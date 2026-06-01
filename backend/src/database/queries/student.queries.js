@@ -5,7 +5,7 @@ class StudentQueries {
     const sql = `
       INSERT INTO students (
         user_id, first_name, last_name, tc_no, birth_date,
-        iban, address, university, department, student_document_url,
+        iban, address, university, department_id, student_document_url,
         kvkk_accepted, terms_accepted
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
@@ -18,7 +18,7 @@ class StudentQueries {
       studentData.iban,
       studentData.address,
       studentData.university,
-      studentData.department,
+      studentData.department_id, // Artık ID gönderiyoruz
       studentData.student_document_url,
       studentData.kvkk_accepted,
       studentData.terms_accepted
@@ -27,7 +27,12 @@ class StudentQueries {
   }
 
   static async findByUserId(userId) {
-    const sql = 'SELECT * FROM students WHERE user_id = ?';
+    const sql = `
+      SELECT s.*, b.ad as department_name 
+      FROM students s
+      LEFT JOIN bolumler b ON s.department_id = b.id
+      WHERE s.user_id = ?
+    `;
     const results = await db.query(sql, [userId]);
     return results[0];
   }
@@ -44,32 +49,36 @@ class StudentQueries {
   }
 
   static async getStudentFullInfo(userId) {
-  const sql = `
-    SELECT 
-      u.id, u.email, u.phone, u.role, u.email_verified, u.phone_verified,
-      s.first_name, s.last_name, s.tc_no, s.birth_date, s.iban,
-      s.address, s.university, s.department, s.student_document_url,
-      s.profile_photo,
-      s.admin_approved,
-      s.created_at
-    FROM users u
-    INNER JOIN students s ON u.id = s.user_id
-    WHERE u.id = ?
-  `;
-  const results = await db.query(sql, [userId]);
-  return results[0];
-}
+    const sql = `
+      SELECT 
+        u.id, u.email, u.phone, u.role, u.email_verified, u.phone_verified,
+        s.first_name, s.last_name, s.tc_no, s.birth_date, s.iban,
+        s.address, s.university, b.ad as department_name, s.department_id,
+        s.student_document_url,
+        s.profile_photo,
+        s.admin_approved,
+        s.created_at
+      FROM users u
+      INNER JOIN students s ON u.id = s.user_id
+      LEFT JOIN bolumler b ON s.department_id = b.id
+      WHERE u.id = ?
+    `;
+    const results = await db.query(sql, [userId]);
+    return results[0];
+  }
 
   // ADMIN - TÜM ÖĞRENCİLER (İstatistiklerle)
   static async findAllWithStats(filters = {}) {
     let sql = `
       SELECT 
         u.id, u.email, u.phone, u.is_active, u.created_at,
-        s.first_name, s.last_name, s.university, s.department, s.grade, s.student_number,
+        s.first_name, s.last_name, s.university, b.ad as department_name, 
+        s.grade, s.student_number,
         COUNT(DISTINCT d.id) as total_jobs,
         COALESCE(SUM(CASE WHEN d.status = 'completed' THEN d.payment_amount ELSE 0 END), 0) as total_earnings
       FROM users u
       INNER JOIN students s ON u.id = s.user_id
+      LEFT JOIN bolumler b ON s.department_id = b.id
       LEFT JOIN deliveries d ON u.id = d.student_user_id
       WHERE u.role = 'student'
     `;
@@ -80,7 +89,12 @@ class StudentQueries {
       params.push(filters.is_active);
     }
 
-    sql += ' GROUP BY u.id, u.email, u.phone, u.is_active, u.created_at, s.first_name, s.last_name, s.university, s.department, s.grade, s.student_number';
+    // GROUP BY kısmına b.ad eklendi
+    sql += ` GROUP BY 
+        u.id, u.email, u.phone, u.is_active, u.created_at, 
+        s.first_name, s.last_name, s.university, b.ad, 
+        s.grade, s.student_number`;
+        
     sql += ' ORDER BY u.created_at DESC';
 
     if (filters.limit) {

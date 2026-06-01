@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { deliveryService } from '../../services/deliveryService';
 
 // Modern Header/Footer
-import { ModernHeader } from '../common/ModernHeader';
+import { ModernHeader } from '../../components/common/ModernHeader';
 
 // YENİ EKLENEN: Ortak Modal Bileşeni
 import { StatusModal } from '../../components/common/ActionModals';

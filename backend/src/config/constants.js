@@ -26,7 +26,7 @@ module.exports = {
   },
   
   PAYMENT_LIMITS: {
-    MIN_AMOUNT: 100,
+    MIN_AMOUNT: 350,
     MAX_AMOUNT: 999999 
   },
   

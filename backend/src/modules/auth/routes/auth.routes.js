@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const AuthController = require('../controllers/auth.controller');
+const BolumController = require('../controllers/bolum.controller');
 const AuthValidator = require('../validators/auth.validator');
 const validate = require('../../../shared/middleware/validation.middleware');
 const authMiddleware = require('../../../shared/middleware/auth.middleware');
@@ -51,5 +52,8 @@ router.get(
 // Telefon doğrulama endpoint'leri
 router.get('/phone-verification/status', authMiddleware, AuthController.checkPhoneVerification);
 router.post('/phone-verification/verify', authMiddleware, AuthController.markPhoneVerified);
+
+// Bölümler - Public
+router.get('/bolumler', BolumController.getAll);
 
 module.exports = router;

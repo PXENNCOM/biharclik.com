@@ -4,7 +4,7 @@ import { adminService } from '../../services/adminService';
 import api from '../../services/api';
 
 // Modern Header
-import { ModernHeader } from '../common/ModernHeader';
+import { ModernHeader } from '../../components/common/ModernHeader';
 
 // İkonlar
 import { 

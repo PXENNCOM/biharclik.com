@@ -5,7 +5,7 @@ import { deliveryService } from '../../services/deliveryService';
 import { userService } from '../../services/userService';
 
 // Componentler
-import { ModernHeader } from '../common/ModernHeader';
+import { ModernHeader } from '../../components/common/ModernHeader';
 import { CreateShipmentModal } from './CreateShipmentModal';
 import { SenderTermsModal } from '../../components/common/SenderTermsModal';
 

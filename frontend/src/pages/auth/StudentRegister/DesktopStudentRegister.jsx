@@ -1,6 +1,8 @@
 import { useNavigate, Link } from 'react-router-dom';
 import { PhoneVerificationModal } from '../../../components/common/PhoneVerificationModal';
 import { KvkkModal } from '../../../components/common/KvkkModal';
+// GÜNCELLEME: Yeni oluşturduğun bileşeni import etmeyi unutma
+import DepartmentSelect from '../../../components/common/DepartmentSelect'; 
 import { motion } from 'framer-motion';
 import { ISTANBUL_UNIVERSITIES } from '../../../data/istanbul-universities';
 
@@ -15,15 +17,27 @@ import LogoImage from '../../../assets/yellow_logo.png';
 import HeroImage from '../../../assets/login-hero.png'; 
 
 const DesktopStudentRegister = ({ 
-  formData, studentDocument, error, loading,
-  phoneVerified, showPhoneModal, showKvkkModal, kvkkModalType,
-  handleChange, handleFileChange, handleSubmit,
-  setShowPhoneModal, setShowKvkkModal, setKvkkModalType, onPhoneVerified
+  formData, 
+  bolumler, // GÜNCELLEME: Controller'dan gelen listeyi buraya ekledik
+  studentDocument, 
+  error, 
+  loading,
+  phoneVerified, 
+  showPhoneModal, 
+  showKvkkModal, 
+  kvkkModalType,
+  handleChange, 
+  handleFileChange, 
+  handleSubmit,
+  setShowPhoneModal, 
+  setShowKvkkModal, 
+  setKvkkModalType, 
+  onPhoneVerified
 }) => {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-white font-sans text-gray-900 overflow-x-hidden">
       
-      {/* SOL: MARKA */}
+      {/* SOL: MARKA (BIHARÇLIK) */}
       <div className="lg:w-5/12 bg-gray-900 text-white flex flex-col relative overflow-hidden min-h-[300px] lg:min-h-screen lg:fixed lg:left-0 lg:top-0 lg:h-full z-10">
         <img src={HeroImage} alt="Öğrenci Kurye" className="absolute inset-0 w-full h-full object-cover z-0 opacity-60" />
         <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/50 to-transparent z-10"></div>
@@ -31,7 +45,7 @@ const DesktopStudentRegister = ({
           <motion.img initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} src={LogoImage} alt="Logo" className="w-48 h-auto mb-6 drop-shadow-2xl" />
         </div>
         <div className="relative z-20 text-[10px] text-gray-500 font-bold text-center pb-8 tracking-[0.3em]">
-          © 2026 BİHARÇLIK • Campus On-The-Go
+          © 2026 BİHARÇLIK 
         </div>
       </div>
 
@@ -67,7 +81,13 @@ const DesktopStudentRegister = ({
               <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Eğitim Bilgileri</label>
               <div className="grid grid-cols-2 gap-5 mb-6">
                 <UniversitySelect value={formData.university} onChange={handleChange} />
-                <InputGroup icon={<BiBook />} label="BÖLÜM" name="department" value={formData.department} onChange={handleChange} placeholder="Bölümünüz" />
+                
+                {/* GÜNCELLEME: Artık yeni searchable select bileşenini kullanıyoruz */}
+                <DepartmentSelect 
+                  value={formData.department_id} 
+                  options={bolumler} 
+                  onChange={handleChange} 
+                />
               </div>
               <FileSelect 
                 id="student_doc" 
@@ -133,8 +153,7 @@ const DesktopStudentRegister = ({
   );
 };
 
-// ALT BİLEŞENLER
-
+// ALT BİLEŞENLER (Burada bir değişiklik yok, sadece InputGroup vb. bileşenler)
 const InputGroup = ({ icon, label, name, type = "text", value, onChange, placeholder, maxLength }) => (
   <div className="group">
     <label className="block text-[11px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">{label}</label>

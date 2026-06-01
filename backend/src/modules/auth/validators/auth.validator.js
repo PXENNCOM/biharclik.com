@@ -54,9 +54,10 @@ class AuthValidator {
       'string.min': 'Üniversite adı en az 2 karakter olmalıdır',
       'any.required': 'Üniversite bilgisi zorunludur'
     }),
-    department: Joi.string().min(2).required().messages({
-      'string.min': 'Bölüm adı en az 2 karakter olmalıdır',
-      'any.required': 'Bölüm bilgisi zorunludur'
+    // GÜNCELLENEN KISIM: Artık bir ID (sayı) bekliyoruz
+    department_id: Joi.number().integer().positive().required().messages({
+      'number.base': 'Bölüm bilgisi geçersiz formatta',
+      'any.required': 'Bölüm seçimi zorunludur'
     }),
     kvkk_accepted: Joi.boolean().valid(true).required().messages({
       'any.only': 'KVKK onayı zorunludur'
@@ -66,7 +67,7 @@ class AuthValidator {
     })
   });
 
-  // GÖNDERİCİ KAYIT VALIDASYONU
+  // GÖNDERİCİ KAYIT VALIDASYONU (Değişiklik yok)
   static senderRegister = Joi.object({
     email: Joi.string().email().required().messages({
       'string.email': 'Geçerli bir e-posta adresi giriniz',

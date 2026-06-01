@@ -27,8 +27,16 @@ import { AdminReportsPage } from './pages/admin/AdminReportsPage';
 import { AdminSupportPage } from './pages/admin/AdminSupportPage';
 
 // Common Pages
-import { ProfilePage } from './pages/common/ProfilePage';
-import { SupportPage } from './pages/common/SupportPage';
+import { ProfilePage } from './components/common/ProfilePage';
+import { SupportPage } from './components/common/SupportPage';
+
+import PaymentSuccess from './pages/home/payment/PaymentSuccess';
+import PaymentFailed from './pages/home/payment/PaymentFailed';
+
+
+//Home Pages
+import Home from './pages/home/index'
+import { KurumsalPage } from './pages/home/kurumsal';
 
 function AppRoutes() {
   const location = useLocation();
@@ -44,6 +52,11 @@ function AppRoutes() {
       <Route path="/hesap-olustur/ogrenci" element={<StudentRegisterPage />} />
       <Route path="/hesap-olustur/gonderici" element={<SenderRegisterPage />} />
       <Route path="/register/success" element={<RegisterSuccessPage />} />
+      <Route path='/' element={<Home />} />
+      <Route path="/kurumsal" element={<KurumsalPage />} />
+
+      <Route path="/payment/success" element={<PaymentSuccess />} />
+      <Route path="/payment/failed" element={<PaymentFailed />} />
 
       {/* Student Routes */}
       <Route path="/student/dashboard" element={
@@ -93,8 +106,7 @@ function AppRoutes() {
       } />
 
       {/* Default Routes */}
-      <Route path="/" element={<Navigate to="/login" replace />} />
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

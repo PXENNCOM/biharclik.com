@@ -14,16 +14,19 @@ class DeliveryQueries {
   // YENİ İŞ OLUŞTUR
   static async createDelivery(deliveryData) {
     const sql = `
-      INSERT INTO deliveries (
-        order_number, sender_user_id,
-        pickup_address, pickup_district, pickup_latitude, pickup_longitude, pickup_contact_name, pickup_contact_phone, pickup_notes,
-        delivery_address, delivery_district, delivery_latitude, delivery_longitude, delivery_contact_name, delivery_contact_phone, delivery_notes,
-        package_description, package_size, payment_amount
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
+    INSERT INTO deliveries (
+      order_number, sender_user_id, is_guest, guest_name, guest_phone,
+      pickup_address, pickup_district, pickup_latitude, pickup_longitude, pickup_contact_name, pickup_contact_phone, pickup_notes,
+      delivery_address, delivery_district, delivery_latitude, delivery_longitude, delivery_contact_name, delivery_contact_phone, delivery_notes,
+      package_description, package_size, payment_amount
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `;
     const result = await db.query(sql, [
       deliveryData.order_number,
-      deliveryData.sender_user_id,
+      deliveryData.sender_user_id || null,
+      deliveryData.is_guest || 0,
+      deliveryData.guest_name || null,
+      deliveryData.guest_phone || null,
       deliveryData.pickup_address,
       deliveryData.pickup_district,
       deliveryData.pickup_latitude || null,
@@ -76,14 +79,15 @@ class DeliveryQueries {
   // MÜSAİT İŞLER (Öğrenciler için - henüz kabul edilmemiş)
   static async findAvailableJobs(filters = {}) {
     let sql = `
-      SELECT 
-        d.*,
-        s.email as sender_email,
-        s.phone as sender_phone
-      FROM deliveries d
-      LEFT JOIN users s ON d.sender_user_id = s.id
-      WHERE d.status = 'pending'
-    `;
+    SELECT 
+      d.*,
+      s.email as sender_email,
+      s.phone as sender_phone
+    FROM deliveries d
+    LEFT JOIN users s ON d.sender_user_id = s.id
+    WHERE d.status = 'pending'
+  `;
+
     const params = [];
 
     // İlçe filtresi
@@ -150,8 +154,8 @@ class DeliveryQueries {
   }
 
   // ÖĞRENCİNİN İŞLERİ
-static async findByStudentId(studentId, filters = {}) {
-  let sql = `
+  static async findByStudentId(studentId, filters = {}) {
+    let sql = `
     SELECT 
       d.*,
       s.email as sender_email,
@@ -160,35 +164,35 @@ static async findByStudentId(studentId, filters = {}) {
     LEFT JOIN users s ON d.sender_user_id = s.id
     WHERE d.student_user_id = ?
   `;
-  const params = [studentId];
+    const params = [studentId];
 
-  // ⭐ Durum filtresi - Array desteği
-  if (filters.status) {
-    if (Array.isArray(filters.status)) {
-      // Array ise IN kullan
-      const placeholders = filters.status.map(() => '?').join(',');
-      sql += ` AND d.status IN (${placeholders})`;
-      params.push(...filters.status);
-    } else {
-      // String ise = kullan
-      sql += ' AND d.status = ?';
-      params.push(filters.status);
+    // ⭐ Durum filtresi - Array desteği
+    if (filters.status) {
+      if (Array.isArray(filters.status)) {
+        // Array ise IN kullan
+        const placeholders = filters.status.map(() => '?').join(',');
+        sql += ` AND d.status IN (${placeholders})`;
+        params.push(...filters.status);
+      } else {
+        // String ise = kullan
+        sql += ' AND d.status = ?';
+        params.push(filters.status);
+      }
     }
+
+    sql += ' ORDER BY d.created_at DESC';
+
+    if (filters.limit) {
+      sql += ' LIMIT ?';
+      params.push(parseInt(filters.limit));
+    }
+
+    return await db.query(sql, params);
   }
-
-  sql += ' ORDER BY d.created_at DESC';
-
-  if (filters.limit) {
-    sql += ' LIMIT ?';
-    params.push(parseInt(filters.limit));
-  }
-
-  return await db.query(sql, params);
-}
 
   // İŞİ KABUL ET
-static async acceptJob(deliveryId, studentId) {
-  const query = `
+  static async acceptJob(deliveryId, studentId) {
+    const query = `
     UPDATE deliveries 
     SET student_user_id = ?, 
         status = 'accepted', 
@@ -196,17 +200,17 @@ static async acceptJob(deliveryId, studentId) {
         updated_at = NOW()
     WHERE id = ? AND status = 'pending'
   `;
-  
-  // ⭐ DÜZELTİLDİ: Destructuring kaldırıldı
-  const result = await db.query(query, [studentId, deliveryId]);
-  
-  // Result formatını kontrol et
-  if (Array.isArray(result)) {
-    return result[0]?.affectedRows > 0;
+
+    // ⭐ DÜZELTİLDİ: Destructuring kaldırıldı
+    const result = await db.query(query, [studentId, deliveryId]);
+
+    // Result formatını kontrol et
+    if (Array.isArray(result)) {
+      return result[0]?.affectedRows > 0;
+    }
+
+    return result?.affectedRows > 0;
   }
-  
-  return result?.affectedRows > 0;
-}
 
   // İŞE BAŞLA
   static async startJob(deliveryId, studentId) {

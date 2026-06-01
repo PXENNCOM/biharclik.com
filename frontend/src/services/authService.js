@@ -6,11 +6,17 @@ export const authService = {
     const response = await api.post('/auth/register/student', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
-      },
+      }
     });
+    
     return response.data;
   },
 
+  getBolumler: async () => {
+    const response = await api.get('/auth/bolumler');
+    return response.data; // Backend'den ApiResponse.success formatında geliyor
+  },
+  
   // Gönderici kayıt
   registerSender: async (data) => {
     const response = await api.post('/auth/register/sender', data);

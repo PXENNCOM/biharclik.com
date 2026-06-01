@@ -26,6 +26,33 @@ class DeliveryController {
     }
   }
 
+  // YENİ İŞ OLUŞTUR (Misafir)
+static async createGuestDelivery(req, res, next) {
+  try {
+    const delivery = await DeliveryService.createGuestDelivery(req.body);
+
+    logger.info('Guest delivery created', {
+      guestPhone: req.body.guest_phone,
+      deliveryId: delivery.id,
+      orderNumber: delivery.order_number
+    });
+
+    return ApiResponse.success(
+      res,
+      'Siparişiniz alındı. En kısa sürede sizi arayacağız.',
+      {
+        id: delivery.id,
+        order_number: delivery.order_number,
+        status: delivery.status
+      },
+      201
+    );
+  } catch (error) {
+    logger.error('Create guest delivery error:', error);
+    next(error);
+  }
+}
+
   // MÜSAİT İŞLER (Öğrenci)
   static async getAvailableJobs(req, res, next) {
     try {

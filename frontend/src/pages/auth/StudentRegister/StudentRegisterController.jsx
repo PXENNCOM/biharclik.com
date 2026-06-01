@@ -14,11 +14,23 @@ const getErrorMessage = (err) => {
 const StudentRegisterController = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [formData, setFormData] = useState({
-    email: '', phone: '', password: '', password_confirm: '',
-    first_name: '', last_name: '', tc_no: '', birth_date: '',
-    iban: '', university: '', department: '',
-    kvkk_accepted: false, terms_accepted: false,
+    email: '', 
+    phone: '', 
+    password: '', 
+    password_confirm: '',
+    first_name: '', 
+    last_name: '', 
+    tc_no: '', 
+    birth_date: '',
+    iban: '', 
+    university: '', 
+    // GÜNCELLEME: Artık department değil, department_id tutuyoruz
+    department_id: '', 
+    kvkk_accepted: false, 
+    terms_accepted: false,
   });
+  
+  const [bolumler, setBolumler] = useState([]); // DB'den gelecek bölümler
   const [studentDocument, setStudentDocument] = useState(null);
   const [showKvkkModal, setShowKvkkModal] = useState(false);
   const [kvkkModalType, setKvkkModalType] = useState('aydinlatma');
@@ -29,6 +41,7 @@ const StudentRegisterController = () => {
 
   const navigate = useNavigate();
 
+  // Ekran boyutu kontrolü ve ilk log
   useEffect(() => {
     trackEvent('Kayıt', 'öğrenci_kayıt_sayfası_açıldı');
     const check = () => setIsMobile(window.innerWidth < 1024);
@@ -37,15 +50,35 @@ const StudentRegisterController = () => {
     return () => window.removeEventListener('resize', check);
   }, []);
 
+  // Bölümleri backend'den çek
+  useEffect(() => {
+    const fetchBolumler = async () => {
+      try {
+        const res = await authService.getBolumler();
+        // BackendApiResponse yapısına göre res.data içindeki veriyi alıyoruz
+        setBolumler(res.data || []); 
+      } catch (err) {
+        console.error("Bölümler yüklenemedi:", err);
+      }
+    };
+    fetchBolumler();
+  }, []);
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+    setFormData(prev => ({ 
+      ...prev, 
+      [name]: type === 'checkbox' ? checked : value 
+    }));
   };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { setError('Dosya boyutu 5MB\'dan büyük olamaz'); return; }
+    if (file.size > 5 * 1024 * 1024) { 
+      setError('Dosya boyutu 5MB\'dan büyük olamaz'); 
+      return; 
+    }
     setStudentDocument(file);
     setError('');
     trackEvent('Kayıt', 'öğrenci_belgesi_yüklendi');
@@ -54,17 +87,27 @@ const StudentRegisterController = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    // Validasyonlar
     if (!phoneVerified) { setError('Lütfen telefon numaranızı doğrulayın'); return; }
     if (formData.password !== formData.password_confirm) { setError('Şifreler eşleşmiyor'); return; }
+    if (!formData.department_id) { setError('Lütfen bir bölüm seçiniz'); return; }
     if (!studentDocument) { setError('Lütfen öğrenci belgesini yükleyin'); return; }
     if (!formData.kvkk_accepted || !formData.terms_accepted) { setError('Lütfen yasal metinleri onaylayın'); return; }
 
     setLoading(true);
     try {
       const data = new FormData();
-      Object.keys(formData).forEach(key => data.append(key, formData[key]));
+      
+      // FormData hazırlama (department_id otomatik olarak eklenecektir)
+      Object.keys(formData).forEach(key => {
+        data.append(key, formData[key]);
+      });
+      
       data.append('student_document', studentDocument);
+
       await authService.registerStudent(data);
+      
       trackEvent('Kayıt', 'öğrenci_kayıt_tamamlandı');
       navigate('/register/success');
     } catch (err) {
@@ -77,10 +120,21 @@ const StudentRegisterController = () => {
   };
 
   const props = {
-    formData, studentDocument, error, loading,
-    phoneVerified, showPhoneModal, showKvkkModal, kvkkModalType,
-    handleChange, handleFileChange, handleSubmit,
-    setShowPhoneModal, setShowKvkkModal, setKvkkModalType,
+    formData, 
+    bolumler, 
+    studentDocument, 
+    error, 
+    loading,
+    phoneVerified, 
+    showPhoneModal, 
+    showKvkkModal, 
+    kvkkModalType,
+    handleChange, 
+    handleFileChange, 
+    handleSubmit,
+    setShowPhoneModal, 
+    setShowKvkkModal, 
+    setKvkkModalType,
     onPhoneVerified: () => { setPhoneVerified(true); setShowPhoneModal(false); },
   };
 

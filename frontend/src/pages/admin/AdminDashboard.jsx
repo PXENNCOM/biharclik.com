@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { adminService } from '../../services/adminService';
 
 // Modern Header
-import { ModernHeader } from '../common/ModernHeader';
+import { ModernHeader } from '../../components/common/ModernHeader';
 
 // YENİ: Ortak Modal Bileşenleri
 import { StatusModal, ConfirmModal } from '../../components/common/ActionModals';
@@ -330,7 +330,7 @@ export const AdminDashboard = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm font-medium text-gray-900">{student.university}</div>
-                        <div className="text-xs text-gray-500">{student.department}</div>
+                        <div className="text-xs text-gray-500">{student.department_name}</div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500 font-medium">
                         {new Date(student.created_at).toLocaleDateString('tr-TR')}
@@ -412,7 +412,7 @@ export const AdminDashboard = () => {
                   </h3>
                   <div className="space-y-3">
                     <InfoRow label="Üniversite" value={selectedStudent.university} />
-                    <InfoRow label="Bölüm" value={selectedStudent.department} />
+                    <InfoRow label="Bölüm" value={selectedStudent.department_name} />
                   </div>
                 </div>
               </div>

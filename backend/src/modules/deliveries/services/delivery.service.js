@@ -5,19 +5,33 @@ const { USER_ROLES } = require('../../../config/constants');
 class DeliveryService {
   // YENİ İŞ OLUŞTUR (Sadece Gönderici)
   static async createDelivery(userId, data) {
-    // Sipariş numarası oluştur
     const orderNumber = await DeliveryQueries.generateOrderNumber();
 
     const deliveryData = {
       order_number: orderNumber,
       sender_user_id: userId,
+      is_guest: 0,
       ...data
     };
 
     const deliveryId = await DeliveryQueries.createDelivery(deliveryData);
-    const delivery = await DeliveryQueries.findById(deliveryId);
+    return await DeliveryQueries.findById(deliveryId);
+  }
 
-    return delivery;
+  static async createGuestDelivery(data) {
+    const orderNumber = await DeliveryQueries.generateOrderNumber();
+
+    const deliveryData = {
+      order_number: orderNumber,
+      sender_user_id: null,
+      is_guest: 1,
+      guest_name: data.guest_name,
+      guest_phone: data.guest_phone,
+      ...data
+    };
+
+    const deliveryId = await DeliveryQueries.createDelivery(deliveryData);
+    return await DeliveryQueries.findById(deliveryId);
   }
 
   // MÜSAİT İŞLER (Sadece Öğrenci)
@@ -55,39 +69,39 @@ class DeliveryService {
     return delivery;
   }
 
-// İŞİ KABUL ET (Sadece Öğrenci)
-static async acceptJob(deliveryId, studentId) {
-  // 1. İşi kontrol et
-  const delivery = await DeliveryQueries.findById(deliveryId);
+  // İŞİ KABUL ET (Sadece Öğrenci)
+  static async acceptJob(deliveryId, studentId) {
+    // 1. İşi kontrol et
+    const delivery = await DeliveryQueries.findById(deliveryId);
 
-  if (!delivery) {
-    throw new Error('İş bulunamadı');
+    if (!delivery) {
+      throw new Error('İş bulunamadı');
+    }
+
+    if (delivery.status !== 'pending') {
+      throw new Error('Bu iş zaten alınmış');
+    }
+
+    // 2. ⭐ YENİ: Öğrencinin aktif işi var mı kontrol et
+    const activeJobs = await DeliveryQueries.findByStudentId(studentId, {
+      status: ['accepted', 'in_progress']
+    });
+
+    if (activeJobs && activeJobs.length > 0) {
+      throw new Error(
+        `Zaten aktif bir işiniz var (${activeJobs[0].order_number}). Önce mevcut işi tamamlayın.`
+      );
+    }
+
+    // 3. İşi kabul et
+    const success = await DeliveryQueries.acceptJob(deliveryId, studentId);
+
+    if (!success) {
+      throw new Error('İş kabul edilemedi');
+    }
+
+    return await DeliveryQueries.findById(deliveryId);
   }
-
-  if (delivery.status !== 'pending') {
-    throw new Error('Bu iş zaten alınmış');
-  }
-
-  // 2. ⭐ YENİ: Öğrencinin aktif işi var mı kontrol et
-  const activeJobs = await DeliveryQueries.findByStudentId(studentId, {
-    status: ['accepted', 'in_progress']
-  });
-
-  if (activeJobs && activeJobs.length > 0) {
-    throw new Error(
-      `Zaten aktif bir işiniz var (${activeJobs[0].order_number}). Önce mevcut işi tamamlayın.`
-    );
-  }
-
-  // 3. İşi kabul et
-  const success = await DeliveryQueries.acceptJob(deliveryId, studentId);
-
-  if (!success) {
-    throw new Error('İş kabul edilemedi');
-  }
-
-  return await DeliveryQueries.findById(deliveryId);
-}
 
   // İŞE BAŞLA (Sadece Öğrenci)
   static async startJob(deliveryId, studentId) {

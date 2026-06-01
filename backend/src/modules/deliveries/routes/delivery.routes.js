@@ -8,6 +8,16 @@ const roleMiddleware = require('../../../shared/middleware/role.middleware');
 const { USER_ROLES } = require('../../../config/constants');
 
 // =============================================
+// MİSAFİR ENDPOINT'İ (Auth yok)
+// =============================================
+
+router.post(
+  '/guest',
+  validate(DeliveryValidator.createGuestDelivery),
+  DeliveryController.createGuestDelivery
+);
+
+// =============================================
 // GÖNDERİCİ ENDPOINT'LERİ
 // =============================================
 
@@ -28,20 +38,11 @@ router.get(
   DeliveryController.getMySenderOrders
 );
 
-// İşi iptal et
-router.put(
-  '/:id/cancel',
-  authMiddleware,
-  roleMiddleware(USER_ROLES.SENDER),
-  validate(DeliveryValidator.cancelDelivery),
-  DeliveryController.cancelJob
-);
-
 // =============================================
 // ÖĞRENCİ ENDPOINT'LERİ
 // =============================================
 
-// Müsait işleri listele (Öğrenci ve Admin)
+// Müsait işleri listele
 router.get(
   '/available',
   authMiddleware,
@@ -55,42 +56,6 @@ router.get(
   authMiddleware,
   roleMiddleware(USER_ROLES.STUDENT),
   DeliveryController.getMyStudentJobs
-);
-
-// İşi kabul et
-router.post(
-  '/:id/accept',
-  authMiddleware,
-  roleMiddleware(USER_ROLES.STUDENT),
-  DeliveryController.acceptJob
-);
-
-// İşe başla
-router.put(
-  '/:id/start',
-  authMiddleware,
-  roleMiddleware(USER_ROLES.STUDENT),
-  DeliveryController.startJob
-);
-
-// İşi tamamla
-router.put(
-  '/:id/complete',
-  authMiddleware,
-  roleMiddleware(USER_ROLES.STUDENT),
-  DeliveryController.completeJob
-);
-
-// =============================================
-// ORTAK ENDPOINT'LER (Gönderici + Öğrenci)
-// =============================================
-
-// İş detayı (Gönderici + Öğrenci + Admin)
-router.get(
-  '/:id',
-  authMiddleware,
-  roleMiddleware(USER_ROLES.SENDER, USER_ROLES.STUDENT, USER_ROLES.ADMIN),
-  DeliveryController.getDeliveryById
 );
 
 // =============================================
@@ -113,13 +78,58 @@ router.get(
   DeliveryController.getStats
 );
 
-// Ödeme durumu güncelle (Manuel ödeme yönetimi)
+// =============================================
+// ORTAK ENDPOINT'LER — /:id en sona
+// =============================================
+
+// İşi kabul et
+router.post(
+  '/:id/accept',
+  authMiddleware,
+  roleMiddleware(USER_ROLES.STUDENT),
+  DeliveryController.acceptJob
+);
+
+// İşi iptal et
+router.put(
+  '/:id/cancel',
+  authMiddleware,
+  roleMiddleware(USER_ROLES.SENDER),
+  validate(DeliveryValidator.cancelDelivery),
+  DeliveryController.cancelJob
+);
+
+// İşe başla
+router.put(
+  '/:id/start',
+  authMiddleware,
+  roleMiddleware(USER_ROLES.STUDENT),
+  DeliveryController.startJob
+);
+
+// İşi tamamla
+router.put(
+  '/:id/complete',
+  authMiddleware,
+  roleMiddleware(USER_ROLES.STUDENT),
+  DeliveryController.completeJob
+);
+
+// Ödeme durumu güncelle
 router.put(
   '/:id/payment',
   authMiddleware,
   roleMiddleware(USER_ROLES.ADMIN),
   validate(DeliveryValidator.updatePaymentStatus),
   DeliveryController.updatePaymentStatus
+);
+
+// İş detayı — en sona
+router.get(
+  '/:id',
+  authMiddleware,
+  roleMiddleware(USER_ROLES.SENDER, USER_ROLES.STUDENT, USER_ROLES.ADMIN),
+  DeliveryController.getDeliveryById
 );
 
 module.exports = router;

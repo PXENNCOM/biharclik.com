@@ -5,7 +5,7 @@ import { deliveryService } from '../../services/deliveryService';
 import { userService } from '../../services/userService';
 
 // Bileşenler
-import { ModernHeader } from '../common/ModernHeader';
+import { ModernHeader } from '../../components/common/ModernHeader.jsx';
 import { StatusModal, ConfirmModal } from '../../components/common/ActionModals';
 import { JobRouteModal } from './JobRouteModal';
 import { JobMapView } from './JobMapView';

@@ -68,7 +68,7 @@ const DesktopLogin = () => {
 
         {/* Footer */}
           <div className="relative z-20 text-[10px] text-gray-500 font-bold text-center pb-8 tracking-[0.3em]">
-          © 2026 BİHARÇLIK • Campus On-The-Go
+          © 2026 BİHARÇLIK 
         </div>
       </div>
 

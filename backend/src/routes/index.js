@@ -5,16 +5,20 @@ const router = express.Router();
 
 const authModule = require('../modules/auth');
 const deliveryModule = require('../modules/deliveries');
+const paymentModule = require('../modules/payments');
 const adminModule = require('../modules/admin');
 const usersModule = require('../modules/users');
 const supportModule = require('../modules/support'); 
 const tempRoutes = require('./temp.routes');
+
 
 // Auth routes
 router.use('/auth', authModule.routes);
 
 // Delivery routes
 router.use('/deliveries', deliveryModule.routes);
+
+router.use('/payments', paymentModule);
 
 // Admin routes
 router.use('/admin', adminModule.routes);

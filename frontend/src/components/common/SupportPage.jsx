@@ -9,7 +9,7 @@ import { userService } from '../../services/userService';
 
 
 import { ModernHeader } from './ModernHeader';
-import { StatusModal } from '../../components/common/ActionModals';
+import { StatusModal } from './ActionModals';
 
 // Icons
 import { 

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { adminService } from '../../services/adminService';
 
 // Modern Header
-import { ModernHeader } from '../common/ModernHeader';
+import { ModernHeader } from '../../components/common/ModernHeader';
 
 // İkonlar
 import { 

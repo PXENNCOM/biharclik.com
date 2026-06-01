@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { supportService } from '../../services/supportService';
 
 // Components
-import { ModernHeader } from '../common/ModernHeader';
+import { ModernHeader } from '../../components/common/ModernHeader';
 import { StatusModal, ConfirmModal } from '../../components/common/ActionModals';
 
 // Icons

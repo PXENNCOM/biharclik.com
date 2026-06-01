@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { userService } from '../../services/userService';
-import { StatusModal } from '../../components/common/ActionModals'
+import { StatusModal } from './ActionModals'
 
 // ModernHeader ve İkonlar
-import { ModernHeader } from '../common/ModernHeader';
+import { ModernHeader } from '../../components/common/ModernHeader';
 import {
   BiUser,
   BiIdCard,

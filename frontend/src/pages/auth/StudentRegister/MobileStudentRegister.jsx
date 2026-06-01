@@ -10,14 +10,28 @@ import {
 
 import { PhoneVerificationModal } from '../../../components/common/PhoneVerificationModal';
 import { KvkkModal } from '../../../components/common/KvkkModal';
+// GÜNCELLEME: Yeni bileşeni buraya da import ediyoruz
+import DepartmentSelect from '../../../components/common/DepartmentSelect';
 import { ISTANBUL_UNIVERSITIES } from '../../../data/istanbul-universities';
 import LogoImage from '../../../assets/yellow_logo.png';
 
 const MobileStudentRegister = ({ 
-  formData, studentDocument, error, loading,
-  phoneVerified, showPhoneModal, showKvkkModal, kvkkModalType,
-  handleChange, handleFileChange, handleSubmit,
-  setShowPhoneModal, setShowKvkkModal, setKvkkModalType, onPhoneVerified
+  formData, 
+  bolumler, // GÜNCELLEME: Controller'dan gelen liste
+  studentDocument, 
+  error, 
+  loading,
+  phoneVerified, 
+  showPhoneModal, 
+  showKvkkModal, 
+  kvkkModalType,
+  handleChange, 
+  handleFileChange, 
+  handleSubmit,
+  setShowPhoneModal, 
+  setShowKvkkModal, 
+  setKvkkModalType, 
+  onPhoneVerified
 }) => {
   const navigate = useNavigate();
 
@@ -26,7 +40,6 @@ const MobileStudentRegister = ({
       
       {/* --- HEADER SECTION --- */}
       <div className="px-8 pt-12 pb-10 relative overflow-hidden">
-        {/* Dekoratif Arka Plan Işığı */}
         <div className="absolute -top-24 -right-24 w-64 h-64 bg-yellow-400/10 blur-[100px] rounded-full pointer-events-none" />
         
         <div className="flex justify-between items-center mb-10">
@@ -94,7 +107,14 @@ const MobileStudentRegister = ({
             <FormSectionTitle title="Akademik Doğrulama" />
             <div className="space-y-4">
               <CorporateSelect value={formData.university} onChange={handleChange} />
-              <CorporateInput icon={<BiBook />} label="BÖLÜM" name="department" value={formData.department} onChange={handleChange} placeholder="Örn: Endüstriyel Tasarım" />
+              
+              {/* GÜNCELLEME: Searchable Bölüm Seçici */}
+              <DepartmentSelect 
+                value={formData.department_id} 
+                options={bolumler} 
+                onChange={handleChange} 
+              />
+
               <CorporateFileUpload file={studentDocument} onChange={handleFileChange} id="student_doc" label="E-Devlet Öğrenci Belgesi" />
             </div>
           </section>
