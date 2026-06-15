@@ -25,7 +25,7 @@ const SPAWN_INTERVAL = 2800;
 const LIFETIME       = 5500;
 
 const STATS = [
-  { val: '350₺', lbl: 'Alt Limit' },
+  { val: '350₺', lbl: 'Minimum Sipariş Tutarı' },
   { val: '34',   lbl: 'Aktif Bölge' },
   { val: '%100', lbl: 'Doğrulama' },
 ];
@@ -246,8 +246,7 @@ export const HeroSection = () => (
             </h1>
 
             <p className="text-sm md:text-base text-gray-500 leading-relaxed max-w-md mb-8 md:mb-10 font-medium">
-              İstanbul'un ulaşım ağını kazanca dönüştür. Sırt çantana sığan paketler,
-              belirlenmiş duraklar ve anında harçlık.
+              Günlük yolculuklarını İstanbul içi teslimat siparişleriyle değerlendir. Her teslimat, kimliği doğrulanmış kullanıcılar arasında arasında gerçekleşir.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 mb-12 md:mb-16">

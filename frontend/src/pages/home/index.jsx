@@ -17,21 +17,33 @@ import img from '../../assets/img.webp'
 
 const studentSteps = [
   { num: '01', title: 'Kayıt', desc: 'Öğrenci belgenle saniyeler içinde topluluğa katıl.' },
-  { num: '02', title: 'Seçim', desc: 'Güzergahına uyan en iyi harçlık teklifini belirle.' },
+  { num: '02', title: 'Seçim', desc: 'Güzergahına uyan en iyi teslimat teklifini seç.' },
   { num: '03', title: 'Yolculuk', desc: 'Zaten gideceğin yere bir paketle eşlik et.' },
   { num: '04', title: 'Kazanç', desc: 'Hafta boyu teslimatlarını yap, kazancını Perşembe günü toplu al.' },
 ];
 
 const senderSteps = [
-  { num: '01', title: 'Tanım', desc: 'Paket içeriğini ve bırakılacak noktayı gir.' },
-  { num: '02', title: 'İlan', desc: 'Öğrenciler için adil bir harçlık tutarı belirle.' },
-  { num: '03', title: 'Eşleşme', desc: 'Uygun bir öğrenci görüp hemen onaylasın.' },
+  { num: '01', title: 'Tanım', desc: 'Paket içeriğini beyan et ve teslimat adresini gir.' },
+  { num: '02', title: 'İlan', desc: 'Öğrenciler için adil bir teslimat ücreti belirle.' },
+  { num: '03', title: 'Eşleşme', desc: 'Kimliği doğrulanmış bir öğrenci görüp hemen onaylasın.' },
   { num: '04', title: 'Takip', desc: 'Paketin teslim edildiğinde anında bildirim al.' },
 ];
 
 const FAQS = [
+  { 
+    q: 'Platform güvenli mi?', 
+    a: 'Evet. Tüm kullanıcılar telefon numarası ve kimlik doğrulamasından geçer. Kuryeler ayrıca öğrenci belgesi ile onaylanır ve profil fotoğrafları kontrol edilir. Her teslimat fotoğraflı onay ile kayıt altına alınır.' 
+  },
+  { 
+    q: 'Hangi ürünler gönderilemez?', 
+    a: 'Uyuşturucu ve uyarıcı maddeler, ateşli silah ve mühimmat, kaçak/sahte ürünler, nakit para ve değerli kıymetler, alkol-tütün ürünleri, canlı hayvanlar ve tehlikeli/yanıcı maddeler platform üzerinden gönderilemez. Gönderici, paket içeriğini doğru beyan etmekle yükümlüdür.' 
+  },
+  { 
+    q: 'Şüpheli görünen bir paketi teslim almak zorunda mıyım?', 
+    a: 'Hayır. İçeriği beyan ile uyuşmayan, şüpheli görünen veya yasaklı ürün listesine giren bir paketi kurye reddedebilir ve durumu platforma bildirebilir.' 
+  },
   { q: 'Kurye olmak için ne gerekiyor?', a: 'Aktif bir üniversite öğrencisi olman yeterli. Kimlik ve öğrenci belgesi onayı sonrası başlayabilirsin.' },
-  { q: 'Ne kadar kazanabilirim?', a: 'Teslimat başına min. 350₺ kazanırsın. Fiyatı gönderici belirler.' },
+  { q: 'Ne kadar kazanabilirim?', a: 'Teslimat başına minimum 350₺ kazanç elde edersin. Ücreti gönderici belirler.' },
   { q: 'Hangi saatlerde çalışabilirim?', a: 'Tamamen özgürsün. Dersine veya rotana uyan her an ilan alabilirsin.' },
   { q: 'Sadece İstanbul mu?', a: 'Şu an sadece İstanbul içi metro ve metrobüs ağında aktifiz.' },
 ];

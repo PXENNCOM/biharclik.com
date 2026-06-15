@@ -150,10 +150,10 @@ console.log('✅ Delivery:', deliveryRes.data);
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 md:mb-16">
             <div>
               <h2 className="text-3xl md:text-4xl font-black tracking-tighter text-gray-900">
-                Kayıtsız paket gönder<span className="text-[#FBCF2D]">.</span>
+                Hızlı paket gönder<span className="text-[#FBCF2D]">.</span>
               </h2>
               <p className="text-xs md:text-sm font-medium text-gray-400 mt-3 max-w-md leading-relaxed">
-                Hesap oluşturmadan sipariş verin, anında kart ile ödeyin.
+                Üyelik gerektirmez - telefon numaranızı doğrulayın, gönderi bilgilerinizi girin ve güvenli ödeme yapın.
               </p>
             </div>
             <div className="w-full max-w-md flex justify-center items-center opacity-75 hover:opacity-100 transition-opacity duration-300">
@@ -214,10 +214,10 @@ console.log('✅ Delivery:', deliveryRes.data);
                 <p className="text-[9px] font-black uppercase tracking-[0.3em] text-[#FBCF2D] mb-5">Nasıl Çalışır?</p>
                 <div className="flex flex-col gap-5">
                   {[
-                    { n: '01', t: 'Formu doldurun', d: 'Alış ve teslimat adreslerini girin, harçlık belirleyin.' },
-                    { n: '02', t: 'Kart ile ödeyin', d: 'Güvenli iyzico altyapısı ile anında ödeme yapın.' },
-                    { n: '03', t: 'Kurye eşleşir', d: 'Güzergahına uyan öğrenci kurye paketi teslim alır.' },
-                    { n: '04', t: 'Teslimat tamam', d: 'Paketiniz güvenle ulaşır, kurye harçlığını kazanır.' },
+                    { n: '01', t: 'Formu doldurun', d: 'Gönderici bilgilerini ve telefon doğrulamasını tamamlayın, alış/teslimat adreslerini ve teslimat ücretini girin.' },
+                    { n: '02', t: 'Güvenli ödeme', d: 'Güvenli iyzico altyapısı ile anında ödeme yapın.' },
+                    { n: '03', t: 'Kurye eşleşir', d: 'Güzergahına uygun, kimliği doğrulanmış öğrenci kurye paketinizi teslim alır.' },
+                    { n: '04', t: 'Teslimat tamam', d: 'Paketiniz teslim edilir, teslimat fotoğraf/onay kaydı oluşturulur ve kurye ücretini kazanır.' },
                   ].map((s) => (
                     <div key={s.n} className="flex gap-4">
                       <span className="text-[10px] font-black text-[#FBCF2D]/50 w-6 shrink-0 mt-0.5">{s.n}</span>
@@ -230,7 +230,7 @@ console.log('✅ Delivery:', deliveryRes.data);
                 </div>
               </div>
               <div className="bg-[#FBCF2D]/10 rounded-[2rem] p-6 border border-[#FBCF2D]/20">
-                <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Minimum Harçlık</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Minimum Teslimat Ücreti</p>
                 <p className="text-3xl font-black text-gray-900 tracking-tighter">{MIN_AMOUNT}₺</p>
               </div>
             </div>
