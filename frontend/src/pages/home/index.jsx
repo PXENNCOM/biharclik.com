@@ -7,7 +7,6 @@ import {
 
 import { Navbar }      from './Navbar';
 import { HeroSection } from './HeroSection';
-import GuestOrderSection from './GuestOrder';
 import { Footer }      from './Footer';
 
 import img from '../../assets/img.webp'
@@ -85,7 +84,6 @@ export const HomePage = () => {
     <div className="min-h-screen bg-white font-sans text-gray-900 antialiased selection:bg-[#FBCF2D] selection:text-gray-900">
       <Navbar />
       <HeroSection />
-      <GuestOrderSection />
 
       {/* ── NASIL ÇALIŞIR ── */}
       <section id="nasil-calisir" className="py-16 md:py-32">
