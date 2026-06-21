@@ -182,7 +182,7 @@ export const PhoneVerificationModal = ({ isOpen, phoneNumber, onVerified, onClos
       // Firebase doğrulamasını backend'e bildir, phone_verified DB'de güncellensin
       try {
         const firebaseIdToken = await result.user.getIdToken();
-        const { authService } = await import('../../services/auth.service');
+        const { authService } = await import('../../services/authService');
         await authService.verifyPhoneNumber(firebaseIdToken);
         console.log('Telefon doğrulaması backend\'e bildirildi');
       } catch (backendErr) {
