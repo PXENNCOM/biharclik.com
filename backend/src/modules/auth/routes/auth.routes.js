@@ -51,6 +51,9 @@ router.get(
 
 // Telefon doğrulama endpoint'leri
 router.get('/phone-verification/status', authMiddleware, AuthController.checkPhoneVerification);
+
+// GÜVENLİK: Bu endpoint artık Firebase ID token zorunlu kılıyor (body: { firebaseIdToken }).
+// Token doğrulanmadan ve hesap numarasıyla eşleşmeden phone_verified TRUE yapılmıyor.
 router.post('/phone-verification/verify', authMiddleware, AuthController.markPhoneVerified);
 
 // Bölümler - Public

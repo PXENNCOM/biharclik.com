@@ -161,23 +161,29 @@ class AuthController {
     }
   }
 
-  // TELEFON DOĞRULAMASINI İŞARETLE (Manuel test için)
+  // TELEFON DOĞRULAMASINI İŞARETLE
+  // GÜVENLİK: Firebase ID token zorunlu - frontend'in gerçekten SMS doğrulamasını
+  // tamamladığını kanıtlamadan phone_verified TRUE yapılmaz.
   static async markPhoneVerified(req, res, next) {
     try {
-      const userId = req.user.id;
-      
-      await SmsService.markPhoneAsVerified(userId);
-      
-      logger.info('Phone manually marked as verified', { userId });
-      
+      const { firebaseIdToken } = req.body;
+
+      await SmsService.verifyAndMarkPhoneVerified(
+        req.user.id,
+        req.user.phone,
+        firebaseIdToken
+      );
+
+      logger.info('Phone verified', { userId: req.user.id });
+
       return ApiResponse.success(
         res,
-        'Telefon numarası doğrulandı olarak işaretlendi',
+        'Telefon numarası doğrulandı',
         { phone_verified: true }
       );
     } catch (error) {
       logger.error('Mark phone verified error:', error);
-      next(error);
+      return ApiResponse.error(res, error.message, 400);
     }
   }
 }

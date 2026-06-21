@@ -32,6 +32,13 @@ export const authService = {
     return response.data;
   },
 
+  verifyPhoneNumber: async (firebaseIdToken) => {
+  const response = await api.post('/auth/phone-verification/verify', {
+    firebaseIdToken,
+  });
+  return response.data;
+},
+
   // Logout
   logout: async (refreshToken) => {
     const response = await api.post('/auth/logout', {
