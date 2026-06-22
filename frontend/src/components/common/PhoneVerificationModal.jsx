@@ -19,7 +19,7 @@ const isRetryableError = (err) => {
   );
 };
 
-export const PhoneVerificationModal = ({ isOpen, phoneNumber, onVerified, onClose }) => {
+export const PhoneVerificationModal = ({ isOpen, phoneNumber, onVerified, onClose, mode = 'register' }) => {
   const [confirmationResult, setConfirmationResult] = useState(null);
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
@@ -178,23 +178,28 @@ export const PhoneVerificationModal = ({ isOpen, phoneNumber, onVerified, onClos
     try {
       const result = await confirmationResult.confirm(code);
       console.log('Telefon başarıyla doğrulandı (Firebase)!');
+      const firebaseIdToken = await result.user.getIdToken();
 
-      // Firebase doğrulamasını backend'e bildir, phone_verified DB'de güncellensin
-      try {
-        const firebaseIdToken = await result.user.getIdToken();
-        const { authService } = await import('../../services/authService');
-        await authService.verifyPhoneNumber(firebaseIdToken);
-        console.log('Telefon doğrulaması backend\'e bildirildi');
-      } catch (backendErr) {
-        // Firebase doğrulaması başarılı oldu ama backend'e bildirim başarısız oldu.
-        // Kullanıcıyı bekletmemek için akışı kesmiyoruz, ama logluyoruz —
-        // bu durumda phone_verified DB'de TRUE olmamış olabilir, manuel kontrol gerekebilir.
-        console.error('Backend phone_verified güncellemesi başarısız:', backendErr);
-        trackEvent('Telefon', 'backend_dogrulama_hatasi', backendErr?.response?.data?.message || backendErr.message);
+      if (mode === 'register') {
+        // Kayıt akışı: Firebase doğrulamasını hemen backend'e bildir, phone_verified DB'de güncellensin
+        try {
+          const { authService } = await import('../../services/authService');
+          await authService.verifyPhoneNumber(firebaseIdToken);
+          console.log('Telefon doğrulaması backend\'e bildirildi');
+        } catch (backendErr) {
+          // Firebase doğrulaması başarılı oldu ama backend'e bildirim başarısız oldu.
+          // Kullanıcıyı bekletmemek için akışı kesmiyoruz, ama logluyoruz —
+          // bu durumda phone_verified DB'de TRUE olmamış olabilir, manuel kontrol gerekebilir.
+          console.error('Backend phone_verified güncellemesi başarısız:', backendErr);
+          trackEvent('Telefon', 'backend_dogrulama_hatasi', backendErr?.response?.data?.message || backendErr.message);
+        }
       }
+      // mode === 'reset' durumunda backend'e bildirimi burada YAPMIYORUZ —
+      // çağıran component (ForgotPasswordModal) bu token'ı yeni şifreyle birlikte
+      // tek bir istekte backend'e gönderecek.
 
       trackEvent('Telefon', 'telefon_doğrulama_tamamlandı');
-      onVerified();
+      onVerified(firebaseIdToken);
 
     } catch (err) {
       console.error('Kod doğrulama hatası:', err);

@@ -56,6 +56,12 @@ router.get('/phone-verification/status', authMiddleware, AuthController.checkPho
 // Token doğrulanmadan ve hesap numarasıyla eşleşmeden phone_verified TRUE yapılmıyor.
 router.post('/phone-verification/verify', authMiddleware, AuthController.markPhoneVerified);
 
+// Şifremi unuttum - SMS doğrulamalı şifre sıfırlama (public, login gerektirmez)
+// 1. adım: numara kayıtlı mı kontrol et (SMS göndermeden önce)
+router.post('/forgot-password/check-phone', AuthController.checkPhoneForReset);
+// 2. adım: Firebase SMS doğrulaması sonrası, ID token ile şifreyi güncelle
+router.post('/forgot-password/reset', AuthController.resetPassword);
+
 // Bölümler - Public
 router.get('/bolumler', BolumController.getAll);
 

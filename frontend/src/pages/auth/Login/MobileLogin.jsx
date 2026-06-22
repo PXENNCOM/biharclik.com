@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { trackEvent } from '../../../utils/analytics';
+import { ForgotPasswordModal } from '../../common/ForgotPasswordModal';
 
 
 import {
@@ -25,6 +26,7 @@ const MobileLogin = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedRole, setSelectedRole] = useState('student');
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
 
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -148,7 +150,11 @@ const MobileLogin = () => {
               </div>
               <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tight group-hover:text-slate-700 transition-colors">Beni Hatırla</span>
             </label>
-            <button type="button" className="text-[11px] font-bold text-slate-400 hover:text-yellow-600 transition-colors uppercase tracking-tight underline underline-offset-4">
+            <button
+              type="button"
+              onClick={() => setForgotPasswordOpen(true)}
+              className="text-[11px] font-bold text-slate-400 hover:text-yellow-600 transition-colors uppercase tracking-tight underline underline-offset-4"
+            >
               Şifremi Unuttum
             </button>
           </div>
@@ -230,6 +236,11 @@ const MobileLogin = () => {
           </p>
         </form>
       </motion.div>
+
+      <ForgotPasswordModal
+        isOpen={forgotPasswordOpen}
+        onClose={() => setForgotPasswordOpen(false)}
+      />
     </div>
   );
 };

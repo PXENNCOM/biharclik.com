@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { trackEvent } from '../../../utils/analytics';
+import { ForgotPasswordModal } from '../../common/ForgotPasswordModal';
 
 
 import {
@@ -22,6 +23,7 @@ const DesktopLogin = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
 
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -109,7 +111,13 @@ const DesktopLogin = () => {
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <label className="block text-sm font-bold text-gray-700">Şifre</label>
-                  <a href="#" className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline">Şifremi unuttum?</a>
+                  <button
+                    type="button"
+                    onClick={() => setForgotPasswordOpen(true)}
+                    className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline"
+                  >
+                    Şifremi unuttum?
+                  </button>
                 </div>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400 group-focus-within:text-gray-900 transition-colors">
@@ -168,6 +176,11 @@ const DesktopLogin = () => {
 
         </div>
       </div>
+
+      <ForgotPasswordModal
+        isOpen={forgotPasswordOpen}
+        onClose={() => setForgotPasswordOpen(false)}
+      />
     </div>
   );
 };

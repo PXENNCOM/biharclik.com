@@ -18,7 +18,7 @@ import HeroImage from '../../../assets/login-hero.png';
 
 const DesktopStudentRegister = ({ 
   formData, 
-  bolumler, // GÜNCELLEME: Controller'dan gelen listeyi buraya ekledik
+  bolumler, 
   studentDocument, 
   error, 
   loading,

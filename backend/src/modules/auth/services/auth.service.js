@@ -1,9 +1,11 @@
+const admin = require('../../../config/firebase.config');
 const BcryptUtil = require('../../../shared/utils/bcrypt.util');
 const UserQueries = require('../../../database/queries/user.queries');
 const StudentQueries = require('../../../database/queries/student.queries');
 const SenderQueries = require('../../../database/queries/sender.queries');
 const TokenService = require('./token.service');
 const db = require('../../../database/connection');
+const logger = require('../../../shared/utils/logger.util');
 const { USER_ROLES, SENDER_TYPES } = require('../../../config/constants');
 
 class AuthService {
@@ -207,6 +209,76 @@ class AuthService {
 
   static async logout(refreshToken) { await TokenService.revokeToken(refreshToken); }
   static async refreshToken(refreshToken) { return await TokenService.refreshAccessToken(refreshToken); }
+
+  // ŞİFRE SIFIRLAMA - Yardımcı: telefon numarasını uluslararası formata çevir
+  static formatPhoneToInternational(phoneNumber) {
+    const cleaned = String(phoneNumber).replace(/[\s\-().]/g, '');
+    if (cleaned.startsWith('+90')) return cleaned;
+    if (cleaned.startsWith('90')) return '+' + cleaned;
+    if (cleaned.startsWith('0')) return '+90' + cleaned.substring(1);
+    return '+90' + cleaned;
+  }
+
+  // ŞİFREMİ UNUTTUM - 1. adım: numara kayıtlı mı kontrol et
+  // SMS göndermeden önce frontend bunu çağırır, kayıtlı değilse Firebase SMS akışı hiç başlamaz.
+  static async checkPhoneExists(phoneNumber) {
+    const user = await UserQueries.findByPhone(phoneNumber);
+
+    if (!user) {
+      throw new Error('Bu telefon numarasıyla kayıtlı bir hesap bulunamadı');
+    }
+    if (!user.is_active) {
+      throw new Error('Bu hesap devre dışı bırakılmış');
+    }
+
+    return { exists: true };
+  }
+
+  // ŞİFREMİ UNUTTUM - 2. adım: Firebase ID token'ı doğrula ve şifreyi güncelle
+  // GÜVENLİK: Firebase'in SMS doğrulamasını gerçekten tamamladığını kriptografik
+  // olarak kanıtlayan bir ID token olmadan şifre asla değiştirilmez.
+  static async resetPasswordWithPhone(phoneNumber, firebaseIdToken, newPassword) {
+    if (!firebaseIdToken) {
+      throw new Error('Firebase doğrulama token\'ı gerekli');
+    }
+    if (!newPassword || newPassword.length < 6) {
+      throw new Error('Şifre en az 6 karakter olmalı');
+    }
+
+    const user = await UserQueries.findByPhone(phoneNumber);
+    if (!user) {
+      throw new Error('Bu telefon numarasıyla kayıtlı bir hesap bulunamadı');
+    }
+
+    let decoded;
+    try {
+      decoded = await admin.auth().verifyIdToken(firebaseIdToken);
+    } catch (err) {
+      logger.error('Firebase ID token verification failed (password reset):', err);
+      throw new Error('Geçersiz veya süresi dolmuş doğrulama token\'ı');
+    }
+
+    if (!decoded.phone_number) {
+      throw new Error('Token telefon doğrulaması içermiyor');
+    }
+
+    const expectedPhone = this.formatPhoneToInternational(user.phone);
+    if (decoded.phone_number !== expectedPhone) {
+      logger.error('Phone mismatch on password reset', {
+        userId: user.id,
+        expected: expectedPhone,
+        got: decoded.phone_number
+      });
+      throw new Error('Doğrulanan numara hesap numarasıyla eşleşmiyor');
+    }
+
+    const passwordHash = await BcryptUtil.hash(newPassword);
+    await UserQueries.updateUser(user.id, { password_hash: passwordHash });
+
+    logger.info('Password reset via Firebase SMS verification', { userId: user.id });
+
+    return { success: true };
+  }
 }
 
 module.exports = AuthService;

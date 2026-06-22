@@ -50,7 +50,7 @@ class AuthController {
     
     next(error);
   }
-}
+  }
 
   // GÖNDERİCİ KAYIT
   static async registerSender(req, res, next) {
@@ -183,6 +183,44 @@ class AuthController {
       );
     } catch (error) {
       logger.error('Mark phone verified error:', error);
+      return ApiResponse.error(res, error.message, 400);
+    }
+  }
+
+  // ŞİFREMİ UNUTTUM - 1. adım: numara kayıtlı mı kontrol et
+  static async checkPhoneForReset(req, res, next) {
+    try {
+      const { phone } = req.body;
+
+      if (!phone) {
+        return ApiResponse.error(res, 'Telefon numarası gerekli', 400);
+      }
+
+      await AuthService.checkPhoneExists(phone);
+
+      return ApiResponse.success(res, 'Numara kayıtlı', { exists: true });
+    } catch (error) {
+      logger.error('Check phone for password reset error:', error);
+      return ApiResponse.error(res, error.message, 404);
+    }
+  }
+
+  // ŞİFREMİ UNUTTUM - 2. adım: Firebase doğrulaması sonrası şifreyi güncelle
+  static async resetPassword(req, res, next) {
+    try {
+      const { phone, firebaseIdToken, newPassword } = req.body;
+
+      if (!phone || !firebaseIdToken || !newPassword) {
+        return ApiResponse.error(res, 'Eksik bilgi gönderildi', 400);
+      }
+
+      await AuthService.resetPasswordWithPhone(phone, firebaseIdToken, newPassword);
+
+      logger.info('Password reset completed', { phone });
+
+      return ApiResponse.success(res, 'Şifreniz başarıyla güncellendi', { success: true });
+    } catch (error) {
+      logger.error('Password reset error:', error);
       return ApiResponse.error(res, error.message, 400);
     }
   }
