@@ -210,7 +210,16 @@ class AuthService {
   static async logout(refreshToken) { await TokenService.revokeToken(refreshToken); }
   static async refreshToken(refreshToken) { return await TokenService.refreshAccessToken(refreshToken); }
 
-  // ŞİFRE SIFIRLAMA - Yardımcı: telefon numarasını uluslararası formata çevir
+  // ŞİFRE SIFIRLAMA - Yardımcı: gelen numarayı DB formatına (05XXXXXXXXX) normalize et
+  static normalizePhoneForDB(phoneNumber) {
+    const cleaned = String(phoneNumber).replace(/[\s\-().]/g, '');
+    if (cleaned.startsWith('+90')) return '0' + cleaned.substring(3);
+    if (cleaned.startsWith('90') && cleaned.length === 12) return '0' + cleaned.substring(2);
+    if (cleaned.startsWith('0')) return cleaned;
+    return '0' + cleaned;
+  }
+
+  // ŞİFRE SIFIRLAMA - Yardımcı: telefon numarasını uluslararası formata çevir (Firebase için)
   static formatPhoneToInternational(phoneNumber) {
     const cleaned = String(phoneNumber).replace(/[\s\-().]/g, '');
     if (cleaned.startsWith('+90')) return cleaned;
@@ -222,7 +231,8 @@ class AuthService {
   // ŞİFREMİ UNUTTUM - 1. adım: numara kayıtlı mı kontrol et
   // SMS göndermeden önce frontend bunu çağırır, kayıtlı değilse Firebase SMS akışı hiç başlamaz.
   static async checkPhoneExists(phoneNumber) {
-    const user = await UserQueries.findByPhone(phoneNumber);
+    const normalized = this.normalizePhoneForDB(phoneNumber);
+    const user = await UserQueries.findByPhone(normalized);
 
     if (!user) {
       throw new Error('Bu telefon numarasıyla kayıtlı bir hesap bulunamadı');
@@ -245,7 +255,8 @@ class AuthService {
       throw new Error('Şifre en az 6 karakter olmalı');
     }
 
-    const user = await UserQueries.findByPhone(phoneNumber);
+    const normalizedPhone = this.normalizePhoneForDB(phoneNumber);
+    const user = await UserQueries.findByPhone(normalizedPhone);
     if (!user) {
       throw new Error('Bu telefon numarasıyla kayıtlı bir hesap bulunamadı');
     }
