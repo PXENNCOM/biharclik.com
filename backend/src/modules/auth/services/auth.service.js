@@ -231,18 +231,21 @@ class AuthService {
   // ŞİFREMİ UNUTTUM - 1. adım: numara kayıtlı mı kontrol et
   // SMS göndermeden önce frontend bunu çağırır, kayıtlı değilse Firebase SMS akışı hiç başlamaz.
   static async checkPhoneExists(phoneNumber) {
-    const normalized = this.normalizePhoneForDB(phoneNumber);
-    const user = await UserQueries.findByPhone(normalized);
+  const normalized = this.normalizePhoneForDB(phoneNumber);
+  console.log('checkPhoneExists DEBUG:', { gelen: phoneNumber, normalized });
+  
+  const user = await UserQueries.findByPhone(normalized);
+  console.log('checkPhoneExists DEBUG user:', user ? user.id : 'bulunamadı');
 
-    if (!user) {
-      throw new Error('Bu telefon numarasıyla kayıtlı bir hesap bulunamadı');
-    }
-    if (!user.is_active) {
-      throw new Error('Bu hesap devre dışı bırakılmış');
-    }
-
-    return { exists: true };
+  if (!user) {
+    throw new Error('Bu telefon numarasıyla kayıtlı bir hesap bulunamadı');
   }
+  if (!user.is_active) {
+    throw new Error('Bu hesap devre dışı bırakılmış');
+  }
+
+  return { exists: true };
+}
 
   // ŞİFREMİ UNUTTUM - 2. adım: Firebase ID token'ı doğrula ve şifreyi güncelle
   // GÜVENLİK: Firebase'in SMS doğrulamasını gerçekten tamamladığını kriptografik
