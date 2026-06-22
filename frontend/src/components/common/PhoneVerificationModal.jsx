@@ -1,23 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { BiX, BiPhone, BiCheckCircle, BiLoaderAlt, BiErrorCircle } from 'react-icons/bi';
 import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import { auth } from '../../config/firebase.config';
 import { trackEvent } from '../../utils/analytics';
-
-// Hangi hatalar geçici/sunucu kaynaklı (retry'a uygun), hangileri kullanıcı hatası (retry'a uygun değil)
-const isRetryableError = (err) => {
-  const retryableCodes = [
-    'auth/internal-error',
-    'auth/network-request-failed',
-  ];
-  const msg = (err?.message || '').toLowerCase();
-  return (
-    retryableCodes.includes(err?.code) ||
-    msg.includes('error code: 39') ||
-    msg.includes('backenderror') ||
-    msg.includes('503')
-  );
-};
 
 export const PhoneVerificationModal = ({ isOpen, phoneNumber, onVerified, onClose, mode = 'register' }) => {
   const [confirmationResult, setConfirmationResult] = useState(null);
@@ -26,148 +11,132 @@ export const PhoneVerificationModal = ({ isOpen, phoneNumber, onVerified, onClos
   const [error, setError] = useState('');
   const [step, setStep] = useState('send');
   const [timer, setTimer] = useState(60);
-  const [recaptchaReady, setRecaptchaReady] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
+  const recaptchaVerifierRef = useRef(null);
 
+  // Modal kapandığında temizle
   useEffect(() => {
-    if (!isOpen) return;
-
-    if (window.recaptchaVerifier) {
-      try {
-        window.recaptchaVerifier.clear();
-      } catch (e) {
-        console.log('Önceki reCAPTCHA temizlendi');
-      }
-      window.recaptchaVerifier = null;
+    if (!isOpen) {
+      cleanup();
+      setStep('send');
+      setCode('');
+      setError('');
+      setConfirmationResult(null);
+      setTimer(60);
+      return;
     }
 
-    try {
-      const recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        size: 'normal',
-        callback: () => {
-          console.log('reCAPTCHA çözüldü');
-          setRecaptchaReady(true);
-        },
-        'expired-callback': () => {
-          console.log('reCAPTCHA süresi doldu');
-          setRecaptchaReady(false);
-          setError('reCAPTCHA süresi doldu, lütfen tekrar çözün');
-        }
-      });
-
-      window.recaptchaVerifier = recaptchaVerifier;
-
-      recaptchaVerifier.render().then(() => {
-        console.log('reCAPTCHA hazır');
-      }).catch((err) => {
-        console.error('reCAPTCHA render hatası:', err);
-        setError('reCAPTCHA yüklenemedi. Sayfayı yenileyin.');
-      });
-
-    } catch (error) {
-      console.error('reCAPTCHA oluşturma hatası:', error);
-      setError('reCAPTCHA başlatılamadı');
-    }
+    initRecaptcha();
 
     return () => {
-      if (window.recaptchaVerifier) {
-        try {
-          window.recaptchaVerifier.clear();
-        } catch (e) {
-          // Hata olsa bile devam
-        }
-        window.recaptchaVerifier = null;
-      }
+      cleanup();
     };
   }, [isOpen]);
 
   // Timer countdown
   useEffect(() => {
-    if (step === 'verify' && timer > 0) {
-      const interval = setInterval(() => {
-        setTimer(prev => prev - 1);
-      }, 1000);
-      return () => clearInterval(interval);
-    }
+    if (step !== 'verify' || timer <= 0) return;
+    const interval = setInterval(() => setTimer(prev => prev - 1), 1000);
+    return () => clearInterval(interval);
   }, [step, timer]);
 
-  // SMS Gönder
-  const sendVerificationCode = async (isRetry = false) => {
-    setLoading(true);
-    if (!isRetry) {
-      setError('');
-      setRetryCount(0);
+  const cleanup = () => {
+    if (recaptchaVerifierRef.current) {
+      try {
+        recaptchaVerifierRef.current.clear();
+      } catch (e) {
+        // ignore
+      }
+      recaptchaVerifierRef.current = null;
     }
+    // Global temizlik
+    if (window.recaptchaVerifier) {
+      try {
+        window.recaptchaVerifier.clear();
+      } catch (e) {
+        // ignore
+      }
+      window.recaptchaVerifier = null;
+    }
+  };
+
+  const initRecaptcha = () => {
+    cleanup();
+    try {
+      const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        size: 'invisible',
+        callback: () => {
+          console.log('reCAPTCHA çözüldü');
+        },
+        'expired-callback': () => {
+          console.log('reCAPTCHA süresi doldu, yeniden başlatılıyor...');
+          initRecaptcha();
+        },
+      });
+      recaptchaVerifierRef.current = verifier;
+      window.recaptchaVerifier = verifier;
+    } catch (err) {
+      console.error('reCAPTCHA init hatası:', err);
+      setError('Doğrulama servisi başlatılamadı. Sayfayı yenileyin.');
+    }
+  };
+
+  const formatPhone = (phone) => {
+    const cleaned = String(phone).replace(/[\s\-().]/g, '');
+    if (cleaned.startsWith('+90')) return cleaned;
+    if (cleaned.startsWith('90') && cleaned.length === 12) return '+' + cleaned;
+    if (cleaned.startsWith('0')) return '+90' + cleaned.substring(1);
+    return '+90' + cleaned;
+  };
+
+  const sendVerificationCode = async () => {
+    setLoading(true);
+    setError('');
 
     try {
-      const cleaned = phoneNumber.replace(/[\s\-().]/g, '');
-      const normalized = cleaned.startsWith('+90')
-        ? cleaned
-        : cleaned.startsWith('90')
-          ? '+' + cleaned
-          : cleaned.startsWith('0')
-            ? '+90' + cleaned.substring(1)
-            : '+90' + cleaned;
-      const formattedPhone = normalized;
+      const formattedPhone = formatPhone(phoneNumber);
+      console.log('SMS gönderiliyor:', formattedPhone);
 
-      console.log('SMS gönderiliyor:', formattedPhone, isRetry ? '(retry)' : '');
+      if (!recaptchaVerifierRef.current) {
+        initRecaptcha();
+        await new Promise(res => setTimeout(res, 500));
+      }
 
-      const appVerifier = window.recaptchaVerifier;
-      if (!appVerifier) throw new Error('reCAPTCHA hazır değil');
+      const confirmation = await signInWithPhoneNumber(
+        auth,
+        formattedPhone,
+        recaptchaVerifierRef.current
+      );
 
-      const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
       console.log('SMS başarıyla gönderildi');
-
       setConfirmationResult(confirmation);
       setStep('verify');
       setTimer(60);
       setError('');
-      trackEvent('Telefon', 'telefon_doğrulama_başlatıldı');
+      trackEvent('Telefon', 'sms_gonderildi');
 
     } catch (err) {
-      console.error('SMS gönderme hatası - FULL:', {
-        code: err.code,
-        message: err.message,
-        customData: err.customData,
-        isRetry,
-      });
+      console.error('SMS gönderme hatası:', { code: err.code, message: err.message });
+      trackEvent('Telefon', 'sms_hatasi', err.code || err.message);
 
-      // Geçici sunucu hatasıysa ve henüz retry yapılmadıysa, kısa bekleyip 1 kez otomatik tekrar dene
-      if (!isRetry && isRetryableError(err)) {
-        console.log('Geçici sunucu hatası tespit edildi, 2.5sn sonra otomatik tekrar denenecek...');
-        setError('Bağlantı sorunu yaşandı, otomatik olarak tekrar deneniyor...');
-        setRetryCount(1);
-        trackEvent('Telefon', 'telefon_sms_otomatik_retry', err.code || err.message);
+      // reCAPTCHA'yı sıfırla, bir sonraki denemede taze başlasın
+      initRecaptcha();
 
-        setTimeout(() => {
-          sendVerificationCode(true);
-        }, 2500);
-        return; // loading'i burada false yapma, retry sürüyor
-      }
+      let msg = 'SMS gönderilemedi. Lütfen tekrar deneyin.';
+      if (err.code === 'auth/invalid-phone-number')    msg = 'Geçersiz telefon numarası formatı.';
+      else if (err.code === 'auth/too-many-requests')  msg = 'Çok fazla deneme yapıldı. Lütfen 1 saat sonra tekrar deneyin.';
+      else if (err.code === 'auth/quota-exceeded')     msg = 'SMS kotası doldu. Lütfen destek ekibiyle iletişime geçin.';
+      else if (err.code === 'auth/captcha-check-failed' || err.code === 'auth/invalid-app-credential')
+        msg = 'Güvenlik doğrulaması başarısız. Lütfen birkaç dakika sonra tekrar deneyin.';
+      else if (err.code === 'auth/internal-error')     msg = 'Sunucu geçici olarak yanıt vermiyor. Lütfen tekrar deneyin.';
+      else if (err.code === 'auth/network-request-failed') msg = 'Bağlantı hatası. İnternet bağlantınızı kontrol edin.';
+      else if (err.message) msg = err.message;
 
-      let errorMessage = 'SMS gönderilemedi. Lütfen tekrar deneyin.';
-      if (err.code === 'auth/invalid-phone-number') errorMessage = 'Geçersiz telefon numarası formatı';
-      else if (err.code === 'auth/too-many-requests') errorMessage = 'Çok fazla deneme yapıldı. Lütfen 1 saat sonra tekrar deneyin.';
-      else if (err.code === 'auth/quota-exceeded') errorMessage = 'SMS kotası doldu. Lütfen destek ekibiyle iletişime geçin.';
-      else if (err.code === 'auth/invalid-app-credential') errorMessage = 'Doğrulama servisi şu anda yanıt vermiyor, lütfen birkaç dakika sonra tekrar deneyin.';
-      else if (err.code === 'auth/captcha-check-failed') errorMessage = 'Güvenlik doğrulaması başarısız oldu. Sayfayı yenileyip tekrar deneyin.';
-      else if (err.code === 'auth/internal-error') errorMessage = 'Sunucu şu anda yanıt vermiyor, lütfen birkaç dakika sonra tekrar deneyin.';
-      else if (err.message?.includes('TOO_LONG')) errorMessage = 'Girilen telefon numarası çok uzun. Lütfen kontrol edin.';
-      else if (err.message) errorMessage = err.message;
-
-      // Geçici: production'da da gerçek error code'u görelim, sorun tamamen netleşince kaldırılabilir
-      setError(`${errorMessage} (${err.code || 'unknown'})`);
-      trackEvent('Telefon', 'telefon_sms_hatası', err.code || err.message);
+      setError(msg);
     } finally {
-      if (isRetry || !isRetryableError) {
-        setLoading(false);
-      }
-      // Not: retry tetiklendiğinde (return edilen durumda) buraya hiç gelmiyoruz,
-      // bu yüzden loading sadece retry'ın gerçek sonucunda (başarı ya da kalıcı hata) kapanıyor.
+      setLoading(false);
     }
   };
 
-  // Kodu Doğrula
   const verifyCode = async () => {
     if (code.length !== 6) { setError('Lütfen 6 haneli kodu girin'); return; }
     if (!confirmationResult) { setError('Önce SMS kodu gönderin'); return; }
@@ -177,50 +146,56 @@ export const PhoneVerificationModal = ({ isOpen, phoneNumber, onVerified, onClos
 
     try {
       const result = await confirmationResult.confirm(code);
-      console.log('Telefon başarıyla doğrulandı (Firebase)!');
+      console.log('Firebase doğrulaması başarılı');
+
       const firebaseIdToken = await result.user.getIdToken();
 
       if (mode === 'register') {
-        // Kayıt akışı: Firebase doğrulamasını hemen backend'e bildir, phone_verified DB'de güncellensin
         try {
           const { authService } = await import('../../services/authService');
           await authService.verifyPhoneNumber(firebaseIdToken);
-          console.log('Telefon doğrulaması backend\'e bildirildi');
+          console.log('Backend phone_verified güncellendi');
         } catch (backendErr) {
-          // Firebase doğrulaması başarılı oldu ama backend'e bildirim başarısız oldu.
-          // Kullanıcıyı bekletmemek için akışı kesmiyoruz, ama logluyoruz —
-          // bu durumda phone_verified DB'de TRUE olmamış olabilir, manuel kontrol gerekebilir.
-          console.error('Backend phone_verified güncellemesi başarısız:', backendErr);
-          trackEvent('Telefon', 'backend_dogrulama_hatasi', backendErr?.response?.data?.message || backendErr.message);
+          console.error('Backend güncelleme hatası:', backendErr);
+          trackEvent('Telefon', 'backend_dogrulama_hatasi', backendErr?.message);
         }
       }
-      // mode === 'reset' durumunda backend'e bildirimi burada YAPMIYORUZ —
-      // çağıran component (ForgotPasswordModal) bu token'ı yeni şifreyle birlikte
-      // tek bir istekte backend'e gönderecek.
 
-      trackEvent('Telefon', 'telefon_doğrulama_tamamlandı');
+      trackEvent('Telefon', 'dogrulama_tamamlandi');
       onVerified(firebaseIdToken);
 
     } catch (err) {
       console.error('Kod doğrulama hatası:', err);
-      let errorMessage = 'Kod doğrulanamadı';
-      if (err.code === 'auth/invalid-verification-code') errorMessage = 'Hatalı kod. Lütfen kontrol edin.';
-      else if (err.code === 'auth/code-expired') errorMessage = 'Kod süresi doldu. Yeni kod gönderin.';
-      setError(errorMessage);
-      trackEvent('Telefon', 'telefon_kod_hatası', err.code);
+      trackEvent('Telefon', 'kod_hatasi', err.code);
+
+      let msg = 'Kod doğrulanamadı. Lütfen tekrar deneyin.';
+      if (err.code === 'auth/invalid-verification-code') msg = 'Hatalı kod. Lütfen kontrol edin.';
+      else if (err.code === 'auth/code-expired')         msg = 'Kodun süresi doldu. Yeni kod gönderin.';
+
+      setError(msg);
     } finally {
       setLoading(false);
     }
   };
 
-  // Modal kapalıysa render etme
+  const handleResend = () => {
+    setStep('send');
+    setCode('');
+    setError('');
+    setConfirmationResult(null);
+    initRecaptcha();
+  };
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/50 backdrop-blur-sm animate-fadeIn">
       <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 relative max-h-[90vh] overflow-y-auto">
 
-        {/* Kapat Butonu */}
+        {/* Invisible reCAPTCHA container */}
+        <div id="recaptcha-container"></div>
+
+        {/* Kapat */}
         <button
           onClick={onClose}
           className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition"
@@ -241,51 +216,38 @@ export const PhoneVerificationModal = ({ isOpen, phoneNumber, onVerified, onClos
           </p>
         </div>
 
-        {/* Hata Mesajı */}
+        {/* Hata */}
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm mb-4 flex items-center gap-2">
-            {retryCount > 0 && loading ? (
-              <BiLoaderAlt className="animate-spin flex-shrink-0" size={20} />
-            ) : (
-              <BiErrorCircle className="flex-shrink-0" size={20} />
-            )}
+            <BiErrorCircle className="flex-shrink-0" size={20} />
             {error}
           </div>
         )}
 
-        {/* STEP 1: reCAPTCHA ve SMS Gönder */}
+        {/* STEP: SMS Gönder */}
         {step === 'send' && (
-          <div className="space-y-4">
-            {/* reCAPTCHA Container */}
-            <div className="flex justify-center p-4 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
-              <div id="recaptcha-container"></div>
-            </div>
-
-            {/* SMS Gönder Butonu */}
-            <button
-              onClick={() => sendVerificationCode(false)}
-              disabled={loading}
-              className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-4 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? (
-                <>
-                  <BiLoaderAlt className="animate-spin" size={20} />
-                  {retryCount > 0 ? 'Tekrar Deneniyor...' : 'SMS Gönderiliyor...'}
-                </>
-              ) : (
-                <>
-                  <BiPhone size={20} />
-                  SMS Kodu Gönder
-                </>
-              )}
-            </button>
-          </div>
+          <button
+            onClick={sendVerificationCode}
+            disabled={loading}
+            className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-4 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <>
+                <BiLoaderAlt className="animate-spin" size={20} />
+                SMS Gönderiliyor...
+              </>
+            ) : (
+              <>
+                <BiPhone size={20} />
+                SMS Kodu Gönder
+              </>
+            )}
+          </button>
         )}
 
-        {/* STEP 2: Kod Girişi */}
+        {/* STEP: Kod Girişi */}
         {step === 'verify' && (
           <div className="space-y-4">
-            {/* Kod Input */}
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">Doğrulama Kodu</label>
               <input
@@ -299,7 +261,6 @@ export const PhoneVerificationModal = ({ isOpen, phoneNumber, onVerified, onClos
               />
             </div>
 
-            {/* Timer */}
             <div className="text-center">
               {timer > 0 ? (
                 <p className="text-sm text-gray-500">
@@ -307,11 +268,7 @@ export const PhoneVerificationModal = ({ isOpen, phoneNumber, onVerified, onClos
                 </p>
               ) : (
                 <button
-                  onClick={() => {
-                    setStep('send');
-                    setCode('');
-                    setError('');
-                  }}
+                  onClick={handleResend}
                   className="text-sm text-yellow-600 font-bold hover:underline"
                 >
                   Kodu Tekrar Gönder
@@ -319,7 +276,6 @@ export const PhoneVerificationModal = ({ isOpen, phoneNumber, onVerified, onClos
               )}
             </div>
 
-            {/* Doğrula Butonu */}
             <button
               onClick={verifyCode}
               disabled={loading || code.length !== 6}
