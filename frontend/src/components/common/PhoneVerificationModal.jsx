@@ -13,7 +13,6 @@ export const PhoneVerificationModal = ({ isOpen, phoneNumber, onVerified, onClos
   const [timer, setTimer] = useState(60);
   const recaptchaVerifierRef = useRef(null);
 
-  // Modal kapandığında temizle
   useEffect(() => {
     if (!isOpen) {
       cleanup();
@@ -24,15 +23,10 @@ export const PhoneVerificationModal = ({ isOpen, phoneNumber, onVerified, onClos
       setTimer(60);
       return;
     }
-
     initRecaptcha();
-
-    return () => {
-      cleanup();
-    };
+    return () => cleanup();
   }, [isOpen]);
 
-  // Timer countdown
   useEffect(() => {
     if (step !== 'verify' || timer <= 0) return;
     const interval = setInterval(() => setTimer(prev => prev - 1), 1000);
@@ -41,20 +35,11 @@ export const PhoneVerificationModal = ({ isOpen, phoneNumber, onVerified, onClos
 
   const cleanup = () => {
     if (recaptchaVerifierRef.current) {
-      try {
-        recaptchaVerifierRef.current.clear();
-      } catch (e) {
-        // ignore
-      }
+      try { recaptchaVerifierRef.current.clear(); } catch (e) {}
       recaptchaVerifierRef.current = null;
     }
-    // Global temizlik
     if (window.recaptchaVerifier) {
-      try {
-        window.recaptchaVerifier.clear();
-      } catch (e) {
-        // ignore
-      }
+      try { window.recaptchaVerifier.clear(); } catch (e) {}
       window.recaptchaVerifier = null;
     }
   };
@@ -64,11 +49,9 @@ export const PhoneVerificationModal = ({ isOpen, phoneNumber, onVerified, onClos
     try {
       const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         size: 'invisible',
-        callback: () => {
-          console.log('reCAPTCHA çözüldü');
-        },
+        callback: () => console.log('reCAPTCHA çözüldü'),
         'expired-callback': () => {
-          console.log('reCAPTCHA süresi doldu, yeniden başlatılıyor...');
+          console.log('reCAPTCHA süresi doldu, yenileniyor...');
           initRecaptcha();
         },
       });
@@ -91,7 +74,6 @@ export const PhoneVerificationModal = ({ isOpen, phoneNumber, onVerified, onClos
   const sendVerificationCode = async () => {
     setLoading(true);
     setError('');
-
     try {
       const formattedPhone = formatPhone(phoneNumber);
       console.log('SMS gönderiliyor:', formattedPhone);
@@ -101,36 +83,27 @@ export const PhoneVerificationModal = ({ isOpen, phoneNumber, onVerified, onClos
         await new Promise(res => setTimeout(res, 500));
       }
 
-      const confirmation = await signInWithPhoneNumber(
-        auth,
-        formattedPhone,
-        recaptchaVerifierRef.current
-      );
-
+      const confirmation = await signInWithPhoneNumber(auth, formattedPhone, recaptchaVerifierRef.current);
       console.log('SMS başarıyla gönderildi');
       setConfirmationResult(confirmation);
       setStep('verify');
       setTimer(60);
       setError('');
       trackEvent('Telefon', 'sms_gonderildi');
-
     } catch (err) {
       console.error('SMS gönderme hatası:', { code: err.code, message: err.message });
       trackEvent('Telefon', 'sms_hatasi', err.code || err.message);
-
-      // reCAPTCHA'yı sıfırla, bir sonraki denemede taze başlasın
       initRecaptcha();
 
       let msg = 'SMS gönderilemedi. Lütfen tekrar deneyin.';
-      if (err.code === 'auth/invalid-phone-number')    msg = 'Geçersiz telefon numarası formatı.';
-      else if (err.code === 'auth/too-many-requests')  msg = 'Çok fazla deneme yapıldı. Lütfen 1 saat sonra tekrar deneyin.';
-      else if (err.code === 'auth/quota-exceeded')     msg = 'SMS kotası doldu. Lütfen destek ekibiyle iletişime geçin.';
+      if (err.code === 'auth/invalid-phone-number')         msg = 'Geçersiz telefon numarası formatı.';
+      else if (err.code === 'auth/too-many-requests')       msg = 'Çok fazla deneme yapıldı. Lütfen 1 saat sonra tekrar deneyin.';
+      else if (err.code === 'auth/quota-exceeded')          msg = 'SMS kotası doldu. Lütfen destek ekibiyle iletişime geçin.';
       else if (err.code === 'auth/captcha-check-failed' || err.code === 'auth/invalid-app-credential')
-        msg = 'Güvenlik doğrulaması başarısız. Lütfen birkaç dakika sonra tekrar deneyin.';
-      else if (err.code === 'auth/internal-error')     msg = 'Sunucu geçici olarak yanıt vermiyor. Lütfen tekrar deneyin.';
-      else if (err.code === 'auth/network-request-failed') msg = 'Bağlantı hatası. İnternet bağlantınızı kontrol edin.';
-      else if (err.message) msg = err.message;
-
+                                                            msg = 'Güvenlik doğrulaması başarısız. Lütfen birkaç dakika sonra tekrar deneyin.';
+      else if (err.code === 'auth/internal-error')          msg = 'Sunucu geçici olarak yanıt vermiyor. Lütfen tekrar deneyin.';
+      else if (err.code === 'auth/network-request-failed')  msg = 'Bağlantı hatası. İnternet bağlantınızı kontrol edin.';
+      else if (err.message)                                 msg = err.message;
       setError(msg);
     } finally {
       setLoading(false);
@@ -143,35 +116,23 @@ export const PhoneVerificationModal = ({ isOpen, phoneNumber, onVerified, onClos
 
     setLoading(true);
     setError('');
-
     try {
       const result = await confirmationResult.confirm(code);
       console.log('Firebase doğrulaması başarılı');
-
       const firebaseIdToken = await result.user.getIdToken();
 
-      if (mode === 'register') {
-        try {
-          const { authService } = await import('../../services/authService');
-          await authService.verifyPhoneNumber(firebaseIdToken);
-          console.log('Backend phone_verified güncellendi');
-        } catch (backendErr) {
-          console.error('Backend güncelleme hatası:', backendErr);
-          trackEvent('Telefon', 'backend_dogrulama_hatasi', backendErr?.message);
-        }
-      }
+      // mode === 'register' → backend'e ayrıca bildirim yapmıyoruz.
+      // Kayıt formunun submit'inde phone_verified=true olarak DB'ye yazılacak.
+      // mode === 'reset' → token ForgotPasswordModal'a döner, o yönetir.
 
       trackEvent('Telefon', 'dogrulama_tamamlandi');
       onVerified(firebaseIdToken);
-
     } catch (err) {
       console.error('Kod doğrulama hatası:', err);
       trackEvent('Telefon', 'kod_hatasi', err.code);
-
       let msg = 'Kod doğrulanamadı. Lütfen tekrar deneyin.';
       if (err.code === 'auth/invalid-verification-code') msg = 'Hatalı kod. Lütfen kontrol edin.';
       else if (err.code === 'auth/code-expired')         msg = 'Kodun süresi doldu. Yeni kod gönderin.';
-
       setError(msg);
     } finally {
       setLoading(false);
@@ -196,10 +157,7 @@ export const PhoneVerificationModal = ({ isOpen, phoneNumber, onVerified, onClos
         <div id="recaptcha-container"></div>
 
         {/* Kapat */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition"
-        >
+        <button onClick={onClose} className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition">
           <BiX size={24} className="text-gray-400" />
         </button>
 
@@ -232,15 +190,9 @@ export const PhoneVerificationModal = ({ isOpen, phoneNumber, onVerified, onClos
             className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-4 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
-              <>
-                <BiLoaderAlt className="animate-spin" size={20} />
-                SMS Gönderiliyor...
-              </>
+              <><BiLoaderAlt className="animate-spin" size={20} /> SMS Gönderiliyor...</>
             ) : (
-              <>
-                <BiPhone size={20} />
-                SMS Kodu Gönder
-              </>
+              <><BiPhone size={20} /> SMS Kodu Gönder</>
             )}
           </button>
         )}
@@ -267,10 +219,7 @@ export const PhoneVerificationModal = ({ isOpen, phoneNumber, onVerified, onClos
                   Kod tekrar gönderilebilir: <span className="font-bold text-yellow-600">{timer}s</span>
                 </p>
               ) : (
-                <button
-                  onClick={handleResend}
-                  className="text-sm text-yellow-600 font-bold hover:underline"
-                >
+                <button onClick={handleResend} className="text-sm text-yellow-600 font-bold hover:underline">
                   Kodu Tekrar Gönder
                 </button>
               )}
@@ -282,15 +231,9 @@ export const PhoneVerificationModal = ({ isOpen, phoneNumber, onVerified, onClos
               className="w-full bg-gray-900 hover:bg-black text-white font-bold py-4 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
-                <>
-                  <BiLoaderAlt className="animate-spin" size={20} />
-                  Doğrulanıyor...
-                </>
+                <><BiLoaderAlt className="animate-spin" size={20} /> Doğrulanıyor...</>
               ) : (
-                <>
-                  <BiCheckCircle size={20} />
-                  Doğrula
-                </>
+                <><BiCheckCircle size={20} /> Doğrula</>
               )}
             </button>
           </div>
