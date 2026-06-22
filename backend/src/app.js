@@ -12,16 +12,29 @@ const app = express();
 
 app.set('trust proxy', 1);
 
-// Security middleware - Helmet'i configure et
+// Security middleware
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }, // ← YENİ EKLENEN
-  contentSecurityPolicy: false // Development için kapatıyoruz
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: false 
 }));
 
+// CORS Ayarı - İzin verilen domainler listesi netleştirildi
+const allowedOrigins = [
+  'https://biharclik.com', 
+  'https://www.biharclik.com', 
+  'http://localhost:3000', 
+  'http://localhost:5173'
+];
+
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://biharclik.com', 'https://www.biharclik.com', 'http://localhost:3000', 'http://localhost:5173']  
-    : '*',
+  origin: function (origin, callback) {
+    // Postman gibi araçlardan gelen origin'siz isteklere veya listedeki domainlere izin ver
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS Politikası: Bu kökenden erişim izni yok.'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
