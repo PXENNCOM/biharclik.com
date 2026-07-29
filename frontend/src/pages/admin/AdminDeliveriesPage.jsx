@@ -182,7 +182,7 @@ const sendWhatsAppToSender = (delivery) => {
     delivery.student_university || 'belirtilmemiş üniversite',
     delivery.student_department || 'belirtilmemiş bölüm',
     formatCurrency(delivery.payment_amount).replace('₺', '').trim(),
-    'TR00 0000 0000 0000 0000 0000 00'
+    'TR71 0001 0009 6595 9218 5250 01'
   );
 
   console.log('MESAJ:', message);
@@ -192,20 +192,24 @@ const sendWhatsAppToSender = (delivery) => {
 };
 
   const sendWhatsAppToStudent = (delivery) => {
-    if (!delivery.student_phone) {
-      showStatus('error', 'Hata', 'Öğrenci telefon numarası bulunamadı!');
-      return;
-    }
+  if (!delivery.student_phone) {
+    showStatus('error', 'Hata', 'Öğrenci telefon numarası bulunamadı!');
+    return;
+  }
 
-    const message = WhatsAppTemplates.STUDENT_PAYMENT_RECEIVED(
-      delivery.order_number,
-      delivery.pickup_district,
-      delivery.delivery_district,
-      formatCurrency(delivery.payment_amount).replace('₺', '').trim()
-    );
+  const message = WhatsAppTemplates.STUDENT_PAYMENT_RECEIVED(
+    delivery.order_number,
+    delivery.pickup_district,
+    delivery.pickup_address,
+    delivery.pickup_notes,
+    delivery.delivery_district,
+    delivery.delivery_address,
+    delivery.delivery_notes,
+    formatCurrency(delivery.payment_amount).replace('₺', '').trim()
+  );
 
-    openWhatsApp(delivery.student_phone, message);
-  };
+  openWhatsApp(delivery.student_phone, message);
+};
 
   const handleViewDetails = async (deliveryId) => {
   try {
