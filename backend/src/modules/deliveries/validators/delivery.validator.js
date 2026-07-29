@@ -2,8 +2,78 @@ const Joi = require('joi');
 const { ISTANBUL_DISTRICTS, PAYMENT_LIMITS } = require('../../../config/constants');
 
 class DeliveryValidator {
-  // YENİ İŞ OLUŞTUR
+  // YENİ İŞ OLUŞTUR (Üye Gönderici)
   static createDelivery = Joi.object({
+    pickup_address: Joi.string().min(10).required().messages({
+      'string.min': 'Alış adresi en az 10 karakter olmalıdır',
+      'any.required': 'Alış adresi zorunludur'
+    }),
+    pickup_district: Joi.string().valid(...ISTANBUL_DISTRICTS).required().messages({
+      'any.only': 'Geçerli bir İstanbul ilçesi seçiniz',
+      'any.required': 'Alış ilçesi zorunludur'
+    }),
+    pickup_latitude: Joi.number().min(-90).max(90).allow(null),
+    pickup_longitude: Joi.number().min(-180).max(180).allow(null),
+    pickup_contact_name: Joi.string().min(2).required().messages({
+      'string.min': 'Alış noktası iletişim adı en az 2 karakter olmalıdır',
+      'any.required': 'Alış noktası iletişim adı zorunludur'
+    }),
+    pickup_contact_phone: Joi.string().pattern(/^(05)[0-9]{9}$/).required().messages({
+      'string.pattern.base': 'Geçerli bir telefon numarası giriniz (05xxxxxxxxx)',
+      'any.required': 'Alış noktası telefonu zorunludur'
+    }),
+    pickup_notes: Joi.string().max(500).allow('', null),
+
+    delivery_address: Joi.string().min(10).required().messages({
+      'string.min': 'Teslimat adresi en az 10 karakter olmalıdır',
+      'any.required': 'Teslimat adresi zorunludur'
+    }),
+    delivery_district: Joi.string().valid(...ISTANBUL_DISTRICTS).required().messages({
+      'any.only': 'Geçerli bir İstanbul ilçesi seçiniz',
+      'any.required': 'Teslimat ilçesi zorunludur'
+    }),
+    delivery_latitude: Joi.number().min(-90).max(90).allow(null),
+    delivery_longitude: Joi.number().min(-180).max(180).allow(null),
+    delivery_contact_name: Joi.string().min(2).required().messages({
+      'string.min': 'Teslimat noktası iletişim adı en az 2 karakter olmalıdır',
+      'any.required': 'Teslimat noktası iletişim adı zorunludur'
+    }),
+    delivery_contact_phone: Joi.string().pattern(/^(05)[0-9]{9}$/).required().messages({
+      'string.pattern.base': 'Geçerli bir telefon numarası giriniz (05xxxxxxxxx)',
+      'any.required': 'Teslimat noktası telefonu zorunludur'
+    }),
+    delivery_notes: Joi.string().max(500).allow('', null),
+
+    package_description: Joi.string().min(3).max(500).required().messages({
+      'string.min': 'Paket açıklaması en az 3 karakter olmalıdır',
+      'string.max': 'Paket açıklaması en fazla 500 karakter olabilir',
+      'any.required': 'Ne gönderdiğinizi belirtiniz'
+    }),
+    package_size: Joi.string().valid('small', 'medium', 'large').default('small'),
+
+    payment_amount: Joi.number()
+      .min(PAYMENT_LIMITS.MIN_AMOUNT)
+      .max(PAYMENT_LIMITS.MAX_AMOUNT)
+      .required()
+      .messages({
+        'number.min': `Harçlık en az ${PAYMENT_LIMITS.MIN_AMOUNT} TL olmalıdır`,
+        'number.max': 'Harçlık tutarı çok yüksek',
+        'any.required': 'Harçlık tutarı zorunludur'
+      }),
+  });
+
+  // MİSAFİR SİPARİŞ OLUŞTUR
+  static createGuestDelivery = Joi.object({
+    // Misafir bilgileri — email ve pickup_contact_name kaldırıldı, guest_name = pickup ile aynı kişi varsayılıyor
+    guest_name: Joi.string().min(2).max(100).required().messages({
+      'string.min': 'Ad soyad en az 2 karakter olmalıdır',
+      'any.required': 'Ad soyad zorunludur'
+    }),
+    guest_phone: Joi.string().pattern(/^(05)[0-9]{9}$/).required().messages({
+      'string.pattern.base': 'Geçerli bir telefon numarası giriniz (05xxxxxxxxx)',
+      'any.required': 'Telefon numarası zorunludur'
+    }),
+
     // Alış adresi
     pickup_address: Joi.string().min(10).required().messages({
       'string.min': 'Alış adresi en az 10 karakter olmalıdır',
@@ -13,35 +83,15 @@ class DeliveryValidator {
       'any.only': 'Geçerli bir İstanbul ilçesi seçiniz',
       'any.required': 'Alış ilçesi zorunludur'
     }),
-    pickup_latitude: Joi.number()
-      .min(-90)
-      .max(90)
-      .allow(null)
-      .messages({
-        'number.base': 'Alış enlem değeri sayı olmalıdır',
-        'number.min': 'Alış enlem -90 ile 90 arasında olmalıdır',
-        'number.max': 'Alış enlem -90 ile 90 arasında olmalıdır'
-      }),
-    pickup_longitude: Joi.number()
-      .min(-180)
-      .max(180)
-      .allow(null)
-      .messages({
-        'number.base': 'Alış boylam değeri sayı olmalıdır',
-        'number.min': 'Alış boylam -180 ile 180 arasında olmalıdır',
-        'number.max': 'Alış boylam -180 ile 180 arasında olmalıdır'
-      }),
-    pickup_contact_name: Joi.string().min(2).required().messages({
-      'string.min': 'Alış noktası iletişim adı en az 2 karakter olmalıdır',
-      'any.required': 'Alış noktası iletişim adı zorunludur'
-    }),
+    pickup_latitude: Joi.number().min(-90).max(90).allow(null),
+    pickup_longitude: Joi.number().min(-180).max(180).allow(null),
+    // artık zorunlu değil — boş gelirse Service katmanında guest_name'e düşürülüyor
+    pickup_contact_name: Joi.string().min(2).allow('', null),
     pickup_contact_phone: Joi.string().pattern(/^(05)[0-9]{9}$/).required().messages({
       'string.pattern.base': 'Geçerli bir telefon numarası giriniz (05xxxxxxxxx)',
       'any.required': 'Alış noktası telefonu zorunludur'
     }),
-    pickup_notes: Joi.string().max(500).allow('', null).messages({
-      'string.max': 'Alış notları en fazla 500 karakter olabilir'
-    }),
+    pickup_notes: Joi.string().max(500).allow('', null),
 
     // Teslimat adresi
     delivery_address: Joi.string().min(10).required().messages({
@@ -52,139 +102,37 @@ class DeliveryValidator {
       'any.only': 'Geçerli bir İstanbul ilçesi seçiniz',
       'any.required': 'Teslimat ilçesi zorunludur'
     }),
-    delivery_latitude: Joi.number()
-      .min(-90)
-      .max(90)
-      .allow(null)
-      .messages({
-        'number.base': 'Teslimat enlem değeri sayı olmalıdır',
-        'number.min': 'Teslimat enlem -90 ile 90 arasında olmalıdır',
-        'number.max': 'Teslimat enlem -90 ile 90 arasında olmalıdır'
-      }),
-    delivery_longitude: Joi.number()
-      .min(-180)
-      .max(180)
-      .allow(null)
-      .messages({
-        'number.base': 'Teslimat boylam değeri sayı olmalıdır',
-        'number.min': 'Teslimat boylam -180 ile 180 arasında olmalıdır',
-        'number.max': 'Teslimat boylam -180 ile 180 arasında olmalıdır'
-      }),
+    delivery_latitude: Joi.number().min(-90).max(90).allow(null),
+    delivery_longitude: Joi.number().min(-180).max(180).allow(null),
     delivery_contact_name: Joi.string().min(2).required().messages({
-      'string.min': 'Teslimat noktası iletişim adı en az 2 karakter olmalıdır',
-      'any.required': 'Teslimat noktası iletişim adı zorunludur'
+      'string.min': 'Alıcı adı en az 2 karakter olmalıdır',
+      'any.required': 'Alıcı adı zorunludur'
     }),
     delivery_contact_phone: Joi.string().pattern(/^(05)[0-9]{9}$/).required().messages({
       'string.pattern.base': 'Geçerli bir telefon numarası giriniz (05xxxxxxxxx)',
       'any.required': 'Teslimat noktası telefonu zorunludur'
     }),
-    delivery_notes: Joi.string().max(500).allow('', null).messages({
-      'string.max': 'Teslimat notları en fazla 500 karakter olabilir'
-    }),
+    delivery_notes: Joi.string().max(500).allow('', null),
 
     // Paket bilgileri
     package_description: Joi.string().min(3).max(500).required().messages({
       'string.min': 'Paket açıklaması en az 3 karakter olmalıdır',
-      'string.max': 'Paket açıklaması en fazla 500 karakter olabilir',
       'any.required': 'Ne gönderdiğinizi belirtiniz'
     }),
-    package_size: Joi.string().valid('small', 'medium', 'large').default('small').messages({
-      'any.only': 'Paket boyutu small, medium veya large olmalıdır'
-    }),
+    package_size: Joi.string().valid('small', 'medium', 'large').default('small'),
 
-    // Harçlık (minimum 100 TL, üst limit yok)
+    // Harçlık
     payment_amount: Joi.number()
       .min(PAYMENT_LIMITS.MIN_AMOUNT)
       .max(PAYMENT_LIMITS.MAX_AMOUNT)
       .required()
       .messages({
         'number.min': `Harçlık en az ${PAYMENT_LIMITS.MIN_AMOUNT} TL olmalıdır`,
-        'number.max': 'Harçlık tutarı çok yüksek',
         'any.required': 'Harçlık tutarı zorunludur'
       }),
-    
-    // Genel notlar (opsiyonel)
-    notes: Joi.string().max(1000).allow('', null).messages({
-      'string.max': 'Notlar en fazla 1000 karakter olabilir'
-    })
+
+    // guest_email ve notes (genel) kaldırıldı
   });
-
-  // MİSAFİR SİPARİŞ OLUŞTUR
-static createGuestDelivery = Joi.object({
-  // Misafir bilgileri
-  guest_name: Joi.string().min(2).max(100).required().messages({
-    'string.min': 'Ad soyad en az 2 karakter olmalıdır',
-    'any.required': 'Ad soyad zorunludur'
-  }),
-  guest_phone: Joi.string().pattern(/^(05)[0-9]{9}$/).required().messages({
-    'string.pattern.base': 'Geçerli bir telefon numarası giriniz (05xxxxxxxxx)',
-    'any.required': 'Telefon numarası zorunludur'
-  }),
-
-    guest_email: Joi.string().email().allow('', null), 
-
-
-  // Alış adresi
-  pickup_address: Joi.string().min(10).required().messages({
-    'string.min': 'Alış adresi en az 10 karakter olmalıdır',
-    'any.required': 'Alış adresi zorunludur'
-  }),
-  pickup_district: Joi.string().valid(...ISTANBUL_DISTRICTS).required().messages({
-    'any.only': 'Geçerli bir İstanbul ilçesi seçiniz',
-    'any.required': 'Alış ilçesi zorunludur'
-  }),
-  pickup_latitude: Joi.number().min(-90).max(90).allow(null),
-  pickup_longitude: Joi.number().min(-180).max(180).allow(null),
-  pickup_contact_name: Joi.string().min(2).required().messages({
-    'string.min': 'Alış noktası iletişim adı en az 2 karakter olmalıdır',
-    'any.required': 'Alış noktası iletişim adı zorunludur'
-  }),
-  pickup_contact_phone: Joi.string().pattern(/^(05)[0-9]{9}$/).required().messages({
-    'string.pattern.base': 'Geçerli bir telefon numarası giriniz (05xxxxxxxxx)',
-    'any.required': 'Alış noktası telefonu zorunludur'
-  }),
-  pickup_notes: Joi.string().max(500).allow('', null),
-
-  // Teslimat adresi
-  delivery_address: Joi.string().min(10).required().messages({
-    'string.min': 'Teslimat adresi en az 10 karakter olmalıdır',
-    'any.required': 'Teslimat adresi zorunludur'
-  }),
-  delivery_district: Joi.string().valid(...ISTANBUL_DISTRICTS).required().messages({
-    'any.only': 'Geçerli bir İstanbul ilçesi seçiniz',
-    'any.required': 'Teslimat ilçesi zorunludur'
-  }),
-  delivery_latitude: Joi.number().min(-90).max(90).allow(null),
-  delivery_longitude: Joi.number().min(-180).max(180).allow(null),
-  delivery_contact_name: Joi.string().min(2).required().messages({
-    'string.min': 'Teslimat noktası iletişim adı en az 2 karakter olmalıdır',
-    'any.required': 'Teslimat noktası iletişim adı zorunludur'
-  }),
-  delivery_contact_phone: Joi.string().pattern(/^(05)[0-9]{9}$/).required().messages({
-    'string.pattern.base': 'Geçerli bir telefon numarası giriniz (05xxxxxxxxx)',
-    'any.required': 'Teslimat noktası telefonu zorunludur'
-  }),
-  delivery_notes: Joi.string().max(500).allow('', null),
-
-  // Paket bilgileri
-  package_description: Joi.string().min(3).max(500).required().messages({
-    'string.min': 'Paket açıklaması en az 3 karakter olmalıdır',
-    'any.required': 'Ne gönderdiğinizi belirtiniz'
-  }),
-  package_size: Joi.string().valid('small', 'medium', 'large').default('small'),
-
-  // Harçlık
-  payment_amount: Joi.number()
-    .min(PAYMENT_LIMITS.MIN_AMOUNT)
-    .max(PAYMENT_LIMITS.MAX_AMOUNT)
-    .required()
-    .messages({
-      'number.min': `Harçlık en az ${PAYMENT_LIMITS.MIN_AMOUNT} TL olmalıdır`,
-      'any.required': 'Harçlık tutarı zorunludur'
-    }),
-
-  notes: Joi.string().max(1000).allow('', null)
-});
 
   // İŞİ İPTAL ET
   static cancelDelivery = Joi.object({
@@ -205,7 +153,5 @@ static createGuestDelivery = Joi.object({
     admin_notes: Joi.string().max(1000).allow(null, '')
   });
 }
-
-
 
 module.exports = DeliveryValidator;

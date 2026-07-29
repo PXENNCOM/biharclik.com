@@ -34,17 +34,23 @@ export const deliveryService = {
     return response.data;
   },
 
+  // Misafir için
+  createGuestDelivery: async (data) => {
+    const response = await api.post('/deliveries/guest', data);
+    return response.data;
+  },
+
   getMyOrders: async () => {
     const response = await api.get('/deliveries/my-orders');
     return response.data;
   },
 
   cancelDelivery: async (id, cancellation_reason) => {
-  const response = await api.put(`/deliveries/${id}/cancel`, {
-    cancellation_reason: cancellation_reason || 'Kullanıcı iptal etti'
-  });
-  return response.data;
-},
+    const response = await api.put(`/deliveries/${id}/cancel`, {
+      cancellation_reason: cancellation_reason || 'Kullanıcı iptal etti'
+    });
+    return response.data;
+  },
 
   // Ortak
   getDeliveryDetail: async (id) => {

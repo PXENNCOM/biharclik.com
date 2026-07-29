@@ -1,244 +1,193 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { Zap, ShieldCheck, Headset } from 'lucide-react';
-import { BiChevronRight, BiChevronLeft, BiCreditCard } from 'react-icons/bi';
-
-import { StepIndicator } from './StepIndicator';
-import { MapPicker } from './MapPicker';
+import { BiChevronLeft, BiChevronRight, BiCheckCircle, BiCopy } from 'react-icons/bi';
 import { Step0 } from './Steps/Step0';
 import { Step1 } from './Steps/Step1';
 import { Step2 } from './Steps/Step2';
 import { Step3 } from './Steps/Step3';
-import { Step4 } from './Steps/Step4';
-import { STEPS, MIN_AMOUNT, INITIAL_DATA, validateStep } from './constants';
+import { StepIndicator } from './StepIndicator';
+import { MapPicker } from './MapPicker';
+import { INITIAL_DATA, validateStep } from './constants';
+import { deliveryService } from '../../../services/deliveryService';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
-export const GuestOrderSection = () => {
-  const navigate = useNavigate();
+const SuccessScreen = ({ orderNumber }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(orderNumber);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center py-14 gap-6 text-center">
+      <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
+        <BiCheckCircle size={40} className="text-green-600" />
+      </div>
+      <div>
+        <h3 className="text-2xl font-black text-gray-900 mb-2">Siparişiniz Alındı!</h3>
+        <p className="text-gray-500 text-sm max-w-sm mx-auto">
+          Siparişiniz sisteme kaydedildi. Güzergahına uygun bir kurye en kısa sürede atanacak, sizi arayacağız.
+        </p>
+      </div>
+      <button onClick={handleCopy} className="bg-gray-900 rounded-2xl px-8 py-4 flex items-center gap-4 hover:bg-black transition-all">
+        <div className="text-left">
+          <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Sipariş No</p>
+          <p className="text-xl font-black text-[#FBCF2D]">{orderNumber}</p>
+        </div>
+        <BiCopy size={18} className="text-gray-500" />
+      </button>
+      <p className="text-xs text-gray-400">{copied ? 'Kopyalandı ✓' : 'Bu numarayı not alın, takip için kullanabilirsiniz.'}</p>
+    </div>
+  );
+};
+
+const GuestOrder = () => {
   const [step, setStep] = useState(0);
   const [data, setData] = useState(INITIAL_DATA);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState('');
-  const [mapTarget, setMapTarget] = useState(null);
-  const [checkoutFormContent, setCheckoutFormContent] = useState(null);
-  const [currentOrderNumber, setCurrentOrderNumber] = useState(null);
+  const [orderNumber, setOrderNumber] = useState(null);
+  const [mapTarget, setMapTarget] = useState(null); // 'pickup' | 'delivery' | null
 
-  const onChange = (key, val) => {
-    setData(prev => ({ ...prev, [key]: val }));
+  const onChange = (key, value) => {
+    setData(prev => ({ ...prev, [key]: value }));
     if (errors[key]) setErrors(prev => { const e = { ...prev }; delete e[key]; return e; });
   };
 
-  const next = () => {
+  const onOpenMap = (target) => setMapTarget(target);
+
+  const handleMapSelect = ({ lat, lng, address }) => {
+  if (mapTarget === 'pickup') {
+    onChange('pickup_latitude', lat);
+    onChange('pickup_longitude', lng);
+    if (address) onChange('pickup_address', address); // adres bulunduysa inputu doldur
+  } else if (mapTarget === 'delivery') {
+    onChange('delivery_latitude', lat);
+    onChange('delivery_longitude', lng);
+    if (address) onChange('delivery_address', address);
+  }
+  setMapTarget(null);
+};
+
+  const handleNext = () => {
     const errs = validateStep(step, data);
     if (Object.keys(errs).length) { setErrors(errs); return; }
     setErrors({});
     setStep(s => s + 1);
   };
 
-  const back = () => { setErrors({}); setStep(s => s - 1); };
+  const handleBack = () => { setErrors({}); setStep(s => s - 1); };
 
-  const handleMapSelect = (coords) => {
-    if (mapTarget === 'pickup') {
-      onChange('pickup_latitude', coords.lat);
-      onChange('pickup_longitude', coords.lng);
-    } else {
-      onChange('delivery_latitude', coords.lat);
-      onChange('delivery_longitude', coords.lng);
-    }
-    setMapTarget(null);
-  };
+const handleSubmit = async () => {
+  const errs = validateStep(3, data);
+  if (Object.keys(errs).length) { setErrors(errs); return; }
 
-  const submitAndPay = async () => {
-    console.log('API_URL:', API_URL); // ⭐
-    const errs = validateStep(3, data);
-    console.log('Validasyon hataları:', errs);  // ⭐
-    console.log('Data:', data);                  // ⭐
-    if (Object.keys(errs).length) { setErrors(errs); return; }
+  setLoading(true);
+  setApiError('');
 
-    setLoading(true);
-    setApiError('');
+  try {
+    const result = await deliveryService.createGuestDelivery({
+      guest_name: data.guest_name,
+      guest_phone: data.guest_phone,
+      pickup_address: data.pickup_address,
+      pickup_district: data.pickup_district,
+      pickup_latitude: data.pickup_latitude,
+      pickup_longitude: data.pickup_longitude,
+      pickup_contact_name: data.pickup_contact_name || data.guest_name,
+      pickup_contact_phone: data.pickup_contact_phone,
+      pickup_notes: data.pickup_notes || null,
+      delivery_address: data.delivery_address,
+      delivery_district: data.delivery_district,
+      delivery_latitude: data.delivery_latitude,
+      delivery_longitude: data.delivery_longitude,
+      delivery_contact_name: data.delivery_contact_name,
+      delivery_contact_phone: data.delivery_contact_phone,
+      delivery_notes: data.delivery_notes || null,
+      package_description: data.package_description,
+      package_size: data.package_size,
+      payment_amount: Number(data.payment_amount),
+    });
 
-    try {
-      console.log('İstek atılıyor...'); // ⭐
-      console.log('İstek atılıyor...');
-const rawRes = await fetch(`${API_URL}/deliveries/guest`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    guest_name: data.guest_name,
-    guest_phone: data.guest_phone || data.pickup_contact_phone,
-    pickup_address: data.pickup_address,
-    pickup_district: data.pickup_district,
-    pickup_latitude: data.pickup_latitude,
-    pickup_longitude: data.pickup_longitude,
-    pickup_contact_name: data.pickup_contact_name,
-    pickup_contact_phone: data.pickup_contact_phone,
-    pickup_notes: data.pickup_notes || null,
-    delivery_address: data.delivery_address,
-    delivery_district: data.delivery_district,
-    delivery_latitude: data.delivery_latitude,
-    delivery_longitude: data.delivery_longitude,
-    delivery_contact_name: data.delivery_contact_name,
-    delivery_contact_phone: data.delivery_contact_phone,
-    delivery_notes: data.delivery_notes || null,
-    package_description: data.package_description,
-    package_size: data.package_size,
-    payment_amount: Number(data.payment_amount),
-    notes: data.notes || null,
-  })
-});
-const deliveryRes = { data: await rawRes.json() };
-console.log('✅ Delivery:', deliveryRes.data);
+    setOrderNumber(result.data?.order_number);
+    setStep(4); // success screen
+  } catch (err) {
+    setApiError(err.response?.data?.message || err.message || 'Bir hata oluştu. Lütfen tekrar deneyin.');
+  } finally {
+    setLoading(false);
+  }
+};
 
-
-      const delivery = deliveryRes.data.data;
-      if (!delivery || !delivery.id) throw new Error('Sipariş oluşturulamadı');
-
-      setCurrentOrderNumber(delivery.order_number);
-
-      // 2. Payment initialize
-      const nameParts = data.guest_name.trim().split(' ');
-      const firstName = nameParts[0];
-      const lastName = nameParts.slice(1).join(' ') || nameParts[0];
-
-      const paymentRes = await axios.post(`${API_URL}/payments/initialize-guest/${delivery.id}`, {
-        name: firstName,
-        surname: lastName,
-        email: data.guest_email,
-        phone: data.pickup_contact_phone,
-      });
-    console.log('✅ Payment:', paymentRes.data);
-
-
-      setCheckoutFormContent(paymentRes.data.data.checkoutFormContent);
-      setStep(4);
-
-    } catch (err) {
-      console.error('❌ Hata:', err.response?.data || err.message); // ⭐
-      setApiError(err.response?.data?.message || 'Bir hata oluştu. Lütfen tekrar deneyin.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const stepComponents = [
-    <Step0 data={data} onChange={onChange} errors={errors} />,
-    <Step1 data={data} onChange={onChange} errors={errors} onOpenMap={setMapTarget} />,
-    <Step2 data={data} onChange={onChange} errors={errors} onOpenMap={setMapTarget} />,
-    <Step3 data={data} onChange={onChange} errors={errors} />,
-    <Step4 checkoutFormContent={checkoutFormContent} orderNumber={currentOrderNumber} amount={data.payment_amount} />,
-  ];
+  const isLastStep = step === 3;
+  const showFooter = step < 4;
 
   return (
-    <>
+    <section id="hizli-gonderi" className="py-20 md:py-32 px-4 md:px-6 bg-gray-50/60">
+      <div className="max-w-2xl mx-auto">
+
+        <div className="mb-8 text-center">
+          <h2 className="text-3xl md:text-4xl font-black tracking-tighter text-gray-900">
+            Hızlı paket gönder<span className="text-[#FBCF2D]">.</span>
+          </h2>
+          <p className="text-sm font-medium text-gray-400 mt-2">
+            Üyelik gerektirmez — bilgilerini gir, siparişini oluştur.
+          </p>
+        </div>
+
+        {step < 4 && <StepIndicator current={step} />}
+
+        <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-8">
+            {step === 0 && <Step0 data={data} onChange={onChange} errors={errors} />}
+            {step === 1 && <Step1 data={data} onChange={onChange} errors={errors} onOpenMap={onOpenMap} />}
+            {step === 2 && <Step2 data={data} onChange={onChange} errors={errors} onOpenMap={onOpenMap} />}
+            {step === 3 && <Step3 data={data} onChange={onChange} errors={errors} />}
+            {step === 4 && <SuccessScreen orderNumber={orderNumber} />}
+
+            {apiError && (
+              <div className="mt-5 p-4 bg-red-50 rounded-2xl border border-red-100">
+                <p className="text-xs font-bold text-red-600">{apiError}</p>
+              </div>
+            )}
+          </div>
+
+          {showFooter && (
+            <div className="px-8 py-5 border-t border-gray-100 bg-gray-50 flex justify-between items-center">
+              {step > 0 ? (
+                <button onClick={handleBack} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-200 transition-all">
+                  <BiChevronLeft size={18} /> Geri
+                </button>
+              ) : <div />}
+
+              {!isLastStep ? (
+                <button onClick={handleNext} className="flex items-center gap-2 px-7 py-2.5 rounded-xl bg-gray-900 text-white text-sm font-bold hover:bg-black transition-all shadow-lg shadow-gray-200">
+                  Devam Et <BiChevronRight size={18} />
+                </button>
+              ) : (
+                <button onClick={handleSubmit} disabled={loading}
+                  className="flex items-center gap-2 px-8 py-2.5 rounded-xl bg-[#FBCF2D] text-gray-900 text-sm font-black hover:bg-yellow-300 transition-all shadow-lg shadow-yellow-100 disabled:opacity-50">
+                  {loading ? 'Oluşturuluyor...' : <><BiCheckCircle size={18} /> Siparişi Oluştur</>}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+      </div>
+
       {mapTarget && (
         <MapPicker
-          title={mapTarget === 'pickup' ? 'Alış Noktası Konumu' : 'Teslimat Noktası Konumu'}
+          title={mapTarget === 'pickup' ? 'Alış Noktası' : 'Teslimat Noktası'}
           initialLat={mapTarget === 'pickup' ? data.pickup_latitude : data.delivery_latitude}
           initialLng={mapTarget === 'pickup' ? data.pickup_longitude : data.delivery_longitude}
           onSelect={handleMapSelect}
           onClose={() => setMapTarget(null)}
         />
       )}
-
-      <section id="hizli-gonderi" className="py-20 md:py-32 px-4 md:px-6 bg-gray-50/60">
-        <div className="max-w-6xl mx-auto">
-
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 md:mb-16">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-black tracking-tighter text-gray-900">
-                Hızlı paket gönder<span className="text-[#FBCF2D]">.</span>
-              </h2>
-              <p className="text-xs md:text-sm font-medium text-gray-400 mt-3 max-w-md leading-relaxed">
-                Üyelik gerektirmez - telefon numaranızı doğrulayın, gönderi bilgilerinizi girin ve güvenli ödeme yapın.
-              </p>
-            </div>
-            <div className="w-full max-w-md flex justify-center items-center opacity-75 hover:opacity-100 transition-opacity duration-300">
-      <img 
-        src="/logo_band_colored@3x.png" 
-        alt="Güvenli Ödeme Yöntemleri" 
-        className="h-6 md:h-7 w-auto object-contain"
-      />
-    </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            <div className="lg:col-span-7">
-              <div className="bg-white rounded-[2.5rem] p-6 md:p-10 border border-gray-100" style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03)' }}>
-                <StepIndicator current={step} />
-
-                <div className="mb-7">
-                  <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#FBCF2D] mb-1">Adım {step + 1} / {STEPS.length}</p>
-                  <h3 className="text-xl font-black text-gray-900 tracking-tight">{STEPS[step]}</h3>
-                </div>
-
-                {stepComponents[step]}
-
-                {apiError && (
-                  <div className="mt-5 p-4 bg-red-50 rounded-2xl border border-red-100">
-                    <p className="text-[11px] font-bold text-red-600">{apiError}</p>
-                  </div>
-                )}
-
-                {/* Step 4'te footer gizle */}
-                {step < 4 && (
-                  <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-50">
-                    {step > 0 ? (
-                      <button onClick={back} className="flex items-center gap-2 h-11 px-5 rounded-full border border-gray-200 text-[11px] font-black text-gray-500 uppercase tracking-widest hover:bg-gray-50 transition-all">
-                        <BiChevronLeft size={16} /> Geri
-                      </button>
-                    ) : <div />}
-
-                    {step < 3 ? (
-                      <button onClick={next} className="flex items-center gap-2 h-11 px-7 rounded-full bg-gray-900 text-[#FBCF2D] text-[11px] font-black uppercase tracking-widest hover:bg-black transition-all active:scale-95">
-                        İleri <BiChevronRight size={16} />
-                      </button>
-                    ) : (
-                      <button onClick={submitAndPay} disabled={loading} className="flex items-center gap-2 h-11 px-7 rounded-full bg-[#FBCF2D] text-gray-900 text-[11px] font-black uppercase tracking-widest hover:bg-yellow-300 transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed">
-                        {loading
-                          ? <><div className="w-4 h-4 rounded-full border-2 border-gray-900/30 border-t-gray-900 animate-spin" /> Hazırlanıyor...</>
-                          : <><BiCreditCard size={16} /> Ödemeye Geç</>
-                        }
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="lg:col-span-5 flex flex-col gap-4 lg:sticky lg:top-8">
-              <div className="bg-gray-900 rounded-[2rem] p-7">
-                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-[#FBCF2D] mb-5">Nasıl Çalışır?</p>
-                <div className="flex flex-col gap-5">
-                  {[
-                    { n: '01', t: 'Formu doldurun', d: 'Gönderici bilgilerini ve telefon doğrulamasını tamamlayın, alış/teslimat adreslerini ve teslimat ücretini girin.' },
-                    { n: '02', t: 'Güvenli ödeme', d: 'Güvenli iyzico altyapısı ile anında ödeme yapın.' },
-                    { n: '03', t: 'Kurye eşleşir', d: 'Güzergahına uygun, kimliği doğrulanmış öğrenci kurye paketinizi teslim alır.' },
-                    { n: '04', t: 'Teslimat tamam', d: 'Paketiniz teslim edilir, teslimat fotoğraf/onay kaydı oluşturulur ve kurye ücretini kazanır.' },
-                  ].map((s) => (
-                    <div key={s.n} className="flex gap-4">
-                      <span className="text-[10px] font-black text-[#FBCF2D]/50 w-6 shrink-0 mt-0.5">{s.n}</span>
-                      <div>
-                        <p className="text-[11px] font-black text-white mb-0.5">{s.t}</p>
-                        <p className="text-[10px] font-medium text-white/40 leading-relaxed">{s.d}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="bg-[#FBCF2D]/10 rounded-[2rem] p-6 border border-[#FBCF2D]/20">
-                <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Minimum Teslimat Ücreti</p>
-                <p className="text-3xl font-black text-gray-900 tracking-tighter">{MIN_AMOUNT}₺</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-    </>
+    </section>
   );
 };
 
-export default GuestOrderSection;
+export default GuestOrder;

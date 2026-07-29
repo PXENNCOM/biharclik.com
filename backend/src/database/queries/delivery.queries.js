@@ -51,19 +51,22 @@ class DeliveryQueries {
   // İŞ DETAYI
   static async findById(id) {
     const sql = `
-      SELECT 
-        d.*,
-        s.email as sender_email,
-        s.phone as sender_phone,
-        st.email as student_email,
-        st.phone as student_phone,
-        stu.first_name as student_first_name,
-        stu.last_name as student_last_name
-      FROM deliveries d
-      LEFT JOIN users s ON d.sender_user_id = s.id
-      LEFT JOIN users st ON d.student_user_id = st.id
-      LEFT JOIN students stu ON st.id = stu.user_id
-      WHERE d.id = ?
+     SELECT 
+  d.*,
+  s.email as sender_email,
+  s.phone as sender_phone,
+  st.email as student_email,
+  st.phone as student_phone,
+  stu.first_name as student_first_name,
+  stu.last_name as student_last_name,
+  stu.university as student_university,
+  dept.ad as student_department
+FROM deliveries d
+LEFT JOIN users s ON d.sender_user_id = s.id
+LEFT JOIN users st ON d.student_user_id = st.id
+LEFT JOIN students stu ON st.id = stu.user_id
+LEFT JOIN bolumler dept ON stu.department_id = dept.id
+WHERE d.id = ?
     `;
     const results = await db.query(sql, [id]);
     return results[0];
@@ -267,11 +270,14 @@ class DeliveryQueries {
         st.email as student_email,
         st.phone as student_phone,
         stu.first_name as student_first_name,
-        stu.last_name as student_last_name
+        stu.last_name as student_last_name,
+        stu.university as student_university,
+        dept.ad as student_department
       FROM deliveries d
       LEFT JOIN users s ON d.sender_user_id = s.id
       LEFT JOIN users st ON d.student_user_id = st.id
       LEFT JOIN students stu ON st.id = stu.user_id
+      LEFT JOIN bolumler dept ON stu.department_id = dept.id
       WHERE 1=1
     `;
     const params = [];

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Navbar } from '../Navbar'; 
-import { HeroSection } from '../HeroSection'; 
-import { Footer } from '../Footer'; 
+import { Navbar } from '../Navbar';
+import { HeroSection } from '../HeroSection';
+import { Footer } from '../Footer';
 
 export const KurumsalPage = () => {
   const [activeTab, setActiveTab] = useState('hakkimizda');
@@ -29,15 +29,15 @@ export const KurumsalPage = () => {
 
   return (
     <div className="w-full min-h-screen bg-white flex flex-col">
-      
+
       {/* ÜST BİLEŞENLER */}
       <Navbar />
       <HeroSection />
-      
+
       {/* ORTA KURUMSAL ALAN */}
       <div className="w-full flex-1 py-16 px-4 md:px-16 lg:px-44 text-gray-800 flex flex-col items-start">
         <div className="w-full max-w-7xl text-left">
-          
+
           {/* Sayfa Başlığı */}
           <header className="mb-10 text-left">
             <h1 className="text-xl font-bold text-gray-900 uppercase tracking-wider">
@@ -54,11 +54,10 @@ export const KurumsalPage = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`text-[11px] md:text-xs font-semibold uppercase tracking-wider transition-colors duration-200 relative pb-4 -mb-[17px] whitespace-nowrap shrink-0 ${
-                    isActive 
-                      ? 'text-gray-900 font-bold border-b-2 border-[#FBCF2D]' 
+                  className={`text-[11px] md:text-xs font-semibold uppercase tracking-wider transition-colors duration-200 relative pb-4 -mb-[17px] whitespace-nowrap shrink-0 ${isActive
+                      ? 'text-gray-900 font-bold border-b-2 border-[#FBCF2D]'
                       : 'text-gray-400 hover:text-gray-900'
-                  }`}
+                    }`}
                 >
                   {tab.name}
                 </button>
@@ -68,7 +67,7 @@ export const KurumsalPage = () => {
 
           {/* Metin İçerikleri */}
           <main className="text-sm leading-relaxed text-gray-600 space-y-8 antialiased text-left max-w-4xl">
-            
+
             {/* 1. HAKKIMIZDA */}
             {activeTab === 'hakkimizda' && (
               <section className="space-y-6">
@@ -130,7 +129,7 @@ export const KurumsalPage = () => {
             {activeTab === 'teslimat' && (
               <section className="space-y-6">
                 <h2 className="text-base font-bold text-gray-900 uppercase tracking-wide border-b border-gray-50 pb-2">TESLİMAT VE İADE ŞARTLARI</h2>
-                
+
                 <div>
                   <h3 className="font-bold text-gray-900 mb-2">1. Taraflar ve Tanımlar</h3>
                   <p className="mb-2">İşbu sözleşmede;</p>
@@ -241,17 +240,17 @@ export const KurumsalPage = () => {
             {activeTab === 'satis' && (
               <section className="space-y-6">
                 <h2 className="text-base font-bold text-gray-900 uppercase tracking-wide border-b border-gray-50 pb-2">MESAFELİ SATIŞ SÖZLEŞMESİ</h2>
-                
+
                 <div>
                   <h3 className="font-bold text-gray-900 mb-2">1. Taraflar</h3>
                   <div className="space-y-2">
                     <p><strong className="text-gray-900">1.1. Hizmet Sağlayıcı (Aracı Hizmet Sağlayıcı)</strong></p>
-<p>Ticaret Unvanı: HARUN PEKŞEN<br />
-Ticari Marka / Platform Adı: biharçlık<br />
-Web Adresi: biharclik.com<br />
-E-posta: info@biharclik.com<br />
-Adres: YAVUZTÜRK MAH. SÜTÇÜYOLU SK. NO: 40 İÇ KAPI NO: 4  ÜSKÜDAR/ İSTANBUL</p>
-                    
+                    <p>
+                      Ticari Marka / Platform Adı: biharçlık<br />
+                      Web Adresi: biharclik.com<br />
+                      E-posta: info@biharclik.com<br />
+                      Adres: YAVUZTÜRK MAH. SÜTÇÜYOLU SK. NO: 40 İÇ KAPI NO: 4  ÜSKÜDAR/ İSTANBUL</p>
+
                     <p><strong className="text-gray-900">1.2. Alıcı (Gönderici / Tüketici)</strong></p>
                     <p>Platform üzerinden kısa mesafeli teslimat hizmeti siparişi veren, üyelik bilgileri ve faturada yer alan ad, soyad, adres ve iletişim bilgilerine sahip kullanıcıdır (Bundan sonra "Gönderici" olarak anılacaktır).</p>
                   </div>
@@ -314,7 +313,7 @@ Adres: YAVUZTÜRK MAH. SÜTÇÜYOLU SK. NO: 40 İÇ KAPI NO: 4  ÜSKÜDAR/ İSTA
               <section className="space-y-6">
                 <h2 className="text-base font-bold text-gray-900 uppercase tracking-wide border-b border-gray-50 pb-2">İLETİŞİM BİLGİLERİ</h2>
                 <p>Bizimle her türlü soru, görüş, öneri veya iş birliği talepleriniz için aşağıdaki kanallar üzerinden doğrudan iletişime geçebilirsiniz. Destek ekibimiz en kısa sürede size dönüş sağlayacaktır.</p>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                   <div className="space-y-1">
                     <h3 className="font-bold text-gray-900">E-Posta Adresi</h3>

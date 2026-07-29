@@ -14,35 +14,32 @@ export const PACKAGE_SIZES = [
   { value: 'large', label: 'Büyük', desc: 'Sırt çantasına sığan max', icon: '🧳' },
 ];
 
-export const STEPS = ['Bilgileriniz', 'Alış Noktası', 'Teslimat Noktası', 'Paket & Harçlık', 'Ödeme'];
-
+export const STEPS = ['Bilgileriniz', 'Alış Noktası', 'Teslimat Noktası', 'Paket & Harçlık'];
 export const MIN_AMOUNT = 350;
 
+// guest_email ve notes kaldırıldı. pickup_contact_name artık guest_name'den otomatik doldurulacak (Step1 içinde).
 export const INITIAL_DATA = {
-  guest_name: '', guest_email: '', guest_phone: '',
+  guest_name: '', guest_phone: '',
   pickup_address: '', pickup_district: '',
   pickup_latitude: null, pickup_longitude: null,
   pickup_contact_name: '', pickup_contact_phone: '', pickup_notes: '',
   delivery_address: '', delivery_district: '',
   delivery_latitude: null, delivery_longitude: null,
   delivery_contact_name: '', delivery_contact_phone: '', delivery_notes: '',
-  package_description: '', package_size: 'small', payment_amount: '', notes: '',
+  package_description: '', package_size: 'small', payment_amount: '',
 };
 
 export const formatPhone = (v) => v.replace(/\D/g, '').slice(0, 11);
 export const isValidPhone = (p) => /^(05)[0-9]{9}$/.test(p);
-export const isValidEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 
 export const validateStep = (step, data) => {
   const errs = {};
   if (step === 0) {
     if (!data.guest_name || data.guest_name.trim().length < 2) errs.guest_name = 'Ad soyad en az 2 karakter olmalıdır';
-    if (!data.guest_email || !isValidEmail(data.guest_email)) errs.guest_email = 'Geçerli bir e-posta adresi giriniz';
   }
   if (step === 1) {
     if (!data.pickup_address || data.pickup_address.trim().length < 10) errs.pickup_address = 'Alış adresi en az 10 karakter olmalıdır';
     if (!data.pickup_district) errs.pickup_district = 'Alış ilçesi zorunludur';
-    if (!data.pickup_contact_name || data.pickup_contact_name.trim().length < 2) errs.pickup_contact_name = 'Yetkili adı en az 2 karakter olmalıdır';
     if (!isValidPhone(data.pickup_contact_phone)) errs.pickup_contact_phone = 'Geçerli bir telefon giriniz (05xxxxxxxxx)';
   }
   if (step === 2) {

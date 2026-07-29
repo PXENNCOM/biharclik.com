@@ -30,9 +30,6 @@ import { AdminSupportPage } from './pages/admin/AdminSupportPage';
 import { ProfilePage } from './components/common/ProfilePage';
 import { SupportPage } from './components/common/SupportPage';
 
-import PaymentSuccess from './pages/home/payment/PaymentSuccess';
-import PaymentFailed from './pages/home/payment/PaymentFailed';
-
 
 //Home Pages
 import Home from './pages/home/index'
@@ -54,9 +51,6 @@ function AppRoutes() {
       <Route path="/register/success" element={<RegisterSuccessPage />} />
       <Route path='/' element={<Home />} />
       <Route path="/kurumsal" element={<KurumsalPage />} />
-
-      <Route path="/payment/success" element={<PaymentSuccess />} />
-      <Route path="/payment/failed" element={<PaymentFailed />} />
 
       {/* Student Routes */}
       <Route path="/student/dashboard" element={

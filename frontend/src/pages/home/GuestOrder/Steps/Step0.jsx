@@ -1,4 +1,4 @@
-import { BiUser, BiEnvelope } from 'react-icons/bi';
+import { BiUser } from 'react-icons/bi';
 
 const Field = ({ label, error, children, hint }) => (
   <div className="flex flex-col gap-1.5">
@@ -23,7 +23,7 @@ export const Step0 = ({ data, onChange, errors }) => (
     <div className="p-4 bg-[#FBCF2D]/10 rounded-2xl border border-[#FBCF2D]/20">
       <p className="text-[11px] font-bold text-gray-700 leading-relaxed">
         <span className="text-[#FBCF2D] mr-1">★</span>
-        Bilgilerinizi girin, ardından kart ile güvenli ödeme yapın. Siparişiniz hemen işleme alınır.
+        Kurye aramakla uğraşmayın. 45 saniye içinde öğrenci kurye çağırın.
       </p>
     </div>
     <Field label="Ad Soyad" error={errors.guest_name}>
@@ -33,16 +33,6 @@ export const Step0 = ({ data, onChange, errors }) => (
         value={data.guest_name}
         onChange={e => onChange('guest_name', e.target.value)}
         error={errors.guest_name}
-      />
-    </Field>
-    <Field label="E-posta" error={errors.guest_email}>
-      <Input
-        icon={BiEnvelope}
-        placeholder="ornek@email.com"
-        type="email"
-        value={data.guest_email}
-        onChange={e => onChange('guest_email', e.target.value)}
-        error={errors.guest_email}
       />
     </Field>
   </div>

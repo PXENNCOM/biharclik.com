@@ -115,6 +115,7 @@ export const AdminDashboard = () => {
       const studentData = response.data.data || response.data;
       setSelectedStudent(studentData);
       setShowDetailModal(true);
+      console.log(deliveryData)
     } catch (err) {
       showStatus('error', 'Hata', err.response?.data?.message || 'Öğrenci detayları yüklenemedi');
     }

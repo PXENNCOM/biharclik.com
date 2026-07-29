@@ -79,7 +79,7 @@ export const SenderDashboard = () => {
   const handleCreateJobSubmit = async (deliveryData) => {
     const amount = parseFloat(deliveryData.payment_amount);
     if (amount < 100) {
-      showStatus('error', 'Yetersiz Tutar', 'Harçlık minimum 100 TL olmalıdır.');
+      showStatus('error', 'Yetersiz Tutar', 'Harçlık minimum 350 TL olmalıdır.');
       return;
     }
 

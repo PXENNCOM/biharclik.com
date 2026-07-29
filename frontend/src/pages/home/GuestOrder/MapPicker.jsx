@@ -1,13 +1,45 @@
 import { useState, useEffect, useRef } from 'react';
-import { BiCurrentLocation, BiX } from 'react-icons/bi';
+import { BiCurrentLocation, BiX, BiCheck, BiLoaderAlt } from 'react-icons/bi';
 
-export const MapPicker = ({ onSelect, onClose, title, initialLat, initialLng }) => {
+const ISTANBUL_BOUNDS = [[40.80, 27.95], [41.40, 29.60]];
+const inIstanbul = (lat, lng) =>
+  lat >= ISTANBUL_BOUNDS[0][0] && lat <= ISTANBUL_BOUNDS[1][0] &&
+  lng >= ISTANBUL_BOUNDS[0][1] && lng <= ISTANBUL_BOUNDS[1][1];
+
+// Koordinattan adres metni çek (OpenStreetMap Nominatim, ücretsiz, key gerekmez)
+const reverseGeocode = async (lat, lng) => {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&accept-language=tr`
+    );
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (!json || !json.address) return null;
+
+    const a = json.address;
+    // Sokak/mahalle/bina no gibi kısımları birleştirip anlamlı bir adres metni oluştur
+    const parts = [
+      [a.road, a.house_number].filter(Boolean).join(' '),
+      a.neighbourhood || a.suburb || a.quarter,
+      a.city_district || a.town || a.city,
+    ].filter(Boolean);
+
+    return parts.length ? parts.join(', ') : json.display_name || null;
+  } catch {
+    return null;
+  }
+};
+
+export const MapPicker = ({ onSelect, onClose, initialLat, initialLng }) => {
   const mapRef = useRef(null);
   const mapInst = useRef(null);
   const markerRef = useRef(null);
-  const [coords, setCoords] = useState(
+  const [hasCoords, setHasCoords] = useState(!!(initialLat && initialLng));
+  const coordsRef = useRef(
     initialLat && initialLng ? { lat: initialLat, lng: initialLng } : null
   );
+  const [outOfBoundsMsg, setOutOfBoundsMsg] = useState(false);
+  const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {
     const loadLeaflet = () => new Promise((resolve) => {
@@ -30,15 +62,23 @@ export const MapPicker = ({ onSelect, onClose, title, initialLat, initialLng }) 
       const L = window.L;
       const lat = initialLat || 41.015;
       const lng = initialLng || 28.979;
-      const map = L.map(mapRef.current, { center: [lat, lng], zoom: 13 });
+      const map = L.map(mapRef.current, {
+        center: [lat, lng],
+        zoom: 12,
+        maxBounds: ISTANBUL_BOUNDS,
+        maxBoundsViscosity: 1.0,
+        minZoom: 10,
+        zoomControl: false,
+      });
+      L.control.zoom({ position: 'bottomright' }).addTo(map);
       L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
         maxZoom: 19, subdomains: 'abcd'
       }).addTo(map);
 
       const pinIcon = L.divIcon({
         className: '',
-        html: `<div style="width:32px;height:32px;border-radius:50% 50% 50% 0;background:#FBCF2D;border:3px solid #111827;transform:rotate(-45deg);box-shadow:0 4px 12px rgba(0,0,0,0.25);"></div>`,
-        iconSize: [32, 32], iconAnchor: [16, 32],
+        html: `<div style="width:36px;height:36px;border-radius:50% 50% 50% 0;background:#FBCF2D;border:3px solid #111827;transform:rotate(-45deg);box-shadow:0 4px 12px rgba(0,0,0,0.3);"></div>`,
+        iconSize: [36, 36], iconAnchor: [18, 36],
       });
 
       const addMarker = (lt, ln) => {
@@ -48,7 +88,18 @@ export const MapPicker = ({ onSelect, onClose, title, initialLat, initialLng }) 
           markerRef.current = L.marker([lt, ln], { icon: pinIcon, draggable: true }).addTo(map);
           markerRef.current.on('dragend', (e) => {
             const p = e.target.getLatLng();
-            setCoords({ lat: p.lat, lng: p.lng });
+            if (!inIstanbul(p.lat, p.lng)) {
+              const clampedLat = Math.min(Math.max(p.lat, ISTANBUL_BOUNDS[0][0]), ISTANBUL_BOUNDS[1][0]);
+              const clampedLng = Math.min(Math.max(p.lng, ISTANBUL_BOUNDS[0][1]), ISTANBUL_BOUNDS[1][1]);
+              markerRef.current.setLatLng([clampedLat, clampedLng]);
+              coordsRef.current = { lat: clampedLat, lng: clampedLng };
+              setHasCoords(true);
+              setOutOfBoundsMsg(true);
+              setTimeout(() => setOutOfBoundsMsg(false), 2000);
+            } else {
+              coordsRef.current = { lat: p.lat, lng: p.lng };
+              setHasCoords(true);
+            }
           });
         }
       };
@@ -56,10 +107,18 @@ export const MapPicker = ({ onSelect, onClose, title, initialLat, initialLng }) 
       if (initialLat && initialLng) addMarker(initialLat, initialLng);
       map.on('click', (e) => {
         const { lat: lt, lng: ln } = e.latlng;
-        setCoords({ lat: lt, lng: ln });
+        if (!inIstanbul(lt, ln)) {
+          setOutOfBoundsMsg(true);
+          setTimeout(() => setOutOfBoundsMsg(false), 2000);
+          return;
+        }
+        coordsRef.current = { lat: lt, lng: ln };
+        setHasCoords(true);
         addMarker(lt, ln);
       });
       mapInst.current = map;
+
+      setTimeout(() => map.invalidateSize(), 100);
     });
 
     return () => {
@@ -70,67 +129,88 @@ export const MapPicker = ({ onSelect, onClose, title, initialLat, initialLng }) 
   const handleMyLocation = () => {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition((pos) => {
-      const lt = pos.coords.latitude;
-      const ln = pos.coords.longitude;
-      setCoords({ lat: lt, lng: ln });
+      let lt = pos.coords.latitude;
+      let ln = pos.coords.longitude;
+      if (!inIstanbul(lt, ln)) {
+        setOutOfBoundsMsg(true);
+        setTimeout(() => setOutOfBoundsMsg(false), 2500);
+        if (mapInst.current) mapInst.current.flyTo([41.015, 28.979], 11);
+        return;
+      }
+      coordsRef.current = { lat: lt, lng: ln };
+      setHasCoords(true);
       if (mapInst.current) {
         mapInst.current.flyTo([lt, ln], 15);
         const L = window.L;
         const pinIcon = L.divIcon({
           className: '',
-          html: `<div style="width:32px;height:32px;border-radius:50% 50% 50% 0;background:#FBCF2D;border:3px solid #111827;transform:rotate(-45deg);box-shadow:0 4px 12px rgba(0,0,0,0.25);"></div>`,
-          iconSize: [32, 32], iconAnchor: [16, 32],
+          html: `<div style="width:36px;height:36px;border-radius:50% 50% 50% 0;background:#FBCF2D;border:3px solid #111827;transform:rotate(-45deg);box-shadow:0 4px 12px rgba(0,0,0,0.3);"></div>`,
+          iconSize: [36, 36], iconAnchor: [18, 36],
         });
         if (markerRef.current) {
           markerRef.current.setLatLng([lt, ln]);
         } else {
           markerRef.current = L.marker([lt, ln], { icon: pinIcon, draggable: true }).addTo(mapInst.current);
-          markerRef.current.on('dragend', (e) => {
-            const p = e.target.getLatLng();
-            setCoords({ lat: p.lat, lng: p.lng });
-          });
         }
       }
     });
   };
 
+  const handleConfirm = async () => {
+    if (!coordsRef.current || confirming) return;
+    setConfirming(true);
+    const address = await reverseGeocode(coordsRef.current.lat, coordsRef.current.lng);
+    setConfirming(false);
+    onSelect({ ...coordsRef.current, address }); // address bulunamazsa null gelir, index.jsx bunu handle ediyor
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-[2rem] overflow-hidden w-full max-w-2xl shadow-2xl flex flex-col" style={{ maxHeight: '90vh' }}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-[#FBCF2D]">Konum Seç</p>
-            <h3 className="text-sm font-black text-gray-900">{title}</h3>
-          </div>
-          <button onClick={onClose} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-all">
-            <BiX size={18} />
-          </button>
+    <div className="fixed inset-0 z-[9999] bg-white">
+      <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
+
+      <button
+        onClick={onClose}
+        className="absolute top-4 left-4 z-[1000] w-11 h-11 rounded-full bg-white shadow-lg border border-gray-100 flex items-center justify-center hover:bg-gray-50 transition-all"
+      >
+        <BiX size={22} className="text-gray-700" />
+      </button>
+
+      <button
+        onClick={handleMyLocation}
+        className="absolute top-4 right-4 z-[1000] flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl shadow-lg border border-gray-100 text-[12px] font-black text-gray-700 hover:bg-gray-50 transition-all"
+      >
+        <BiCurrentLocation size={17} className="text-[#FBCF2D]" /> Konumumu Bul
+      </button>
+
+      {!hasCoords && !outOfBoundsMsg && (
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[1000] bg-gray-900/85 text-white text-[12px] font-bold px-5 py-2.5 rounded-full backdrop-blur-sm whitespace-nowrap">
+          Haritaya dokunarak konum seçin
         </div>
-        <div className="relative flex-1" style={{ minHeight: 380 }}>
-          <div ref={mapRef} style={{ width: '100%', height: '100%', minHeight: 380 }} />
-          <button onClick={handleMyLocation} className="absolute top-3 right-3 z-[1000] flex items-center gap-2 bg-white px-3 py-2 rounded-xl shadow-lg border border-gray-100 text-[11px] font-black text-gray-700 hover:bg-gray-50 transition-all">
-            <BiCurrentLocation size={16} className="text-[#FBCF2D]" /> Konumumu Bul
-          </button>
-          {!coords && (
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-[1000] bg-gray-900/80 text-white text-[11px] font-bold px-4 py-2 rounded-full backdrop-blur-sm whitespace-nowrap">
-              Haritaya tıklayarak konum seçin
-            </div>
+      )}
+      {outOfBoundsMsg && (
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[1000] bg-red-500/90 text-white text-[12px] font-bold px-5 py-2.5 rounded-full backdrop-blur-sm whitespace-nowrap">
+          Sadece İstanbul sınırları içinden konum seçebilirsiniz
+        </div>
+      )}
+
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000] flex gap-3">
+        <button
+          onClick={onClose}
+          className="h-12 px-6 rounded-full bg-white shadow-lg border border-gray-200 text-[13px] font-black text-gray-600 hover:bg-gray-50 transition-all"
+        >
+          İptal
+        </button>
+        <button
+          onClick={handleConfirm}
+          disabled={!hasCoords || confirming}
+          className="h-12 px-7 rounded-full bg-[#FBCF2D] shadow-lg text-gray-900 text-[13px] font-black hover:bg-yellow-300 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2 min-w-[160px] justify-center"
+        >
+          {confirming ? (
+            <><BiLoaderAlt size={17} className="animate-spin" /> Adres Bulunuyor...</>
+          ) : (
+            <><BiCheck size={17} /> Konumu Onayla</>
           )}
-        </div>
-        <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between gap-4">
-          <div>
-            {coords
-              ? <p className="text-[11px] font-bold text-gray-500">📍 {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}</p>
-              : <p className="text-[11px] font-medium text-gray-400">Henüz konum seçilmedi</p>
-            }
-          </div>
-          <div className="flex gap-2">
-            <button onClick={onClose} className="h-10 px-5 rounded-full border border-gray-200 text-[11px] font-black text-gray-500 hover:bg-gray-50 transition-all">İptal</button>
-            <button onClick={() => coords && onSelect(coords)} disabled={!coords} className="h-10 px-6 rounded-full bg-[#FBCF2D] text-gray-900 text-[11px] font-black hover:bg-yellow-300 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
-              Konumu Onayla
-            </button>
-          </div>
-        </div>
+        </button>
       </div>
     </div>
   );

@@ -168,22 +168,28 @@ export const AdminDeliveriesPage = () => {
     }
   };
 
-  // WhatsApp Mesaj Gönderme Fonksiyonları
-  const sendWhatsAppToSender = (delivery) => {
-    if (!delivery.sender_phone) {
-      showStatus('error', 'Hata', 'Gönderici telefon numarası bulunamadı!');
-      return;
-    }
+const sendWhatsAppToSender = (delivery) => {
+  const phone = delivery.is_guest ? delivery.guest_phone : delivery.sender_phone;
 
-    const message = WhatsAppTemplates.SENDER_COURIER_ASSIGNED(
-      delivery.order_number,
-      delivery.student_name || 'Kuryeniz',
-      formatCurrency(delivery.payment_amount).replace('₺', '').trim(),
-      'TR00 0000 0000 0000 0000 0000 00' // IBAN'ı buraya yazın
-    );
+  if (!phone) {
+    showStatus('error', 'Hata', 'Gönderici telefon numarası bulunamadı!');
+    return;
+  }
 
-    openWhatsApp(delivery.sender_phone, message);
-  };
+  const message = WhatsAppTemplates.SENDER_COURIER_ASSIGNED(
+    delivery.order_number,
+    delivery.student_name || 'Kuryeniz',
+    delivery.student_university || 'belirtilmemiş üniversite',
+    delivery.student_department || 'belirtilmemiş bölüm',
+    formatCurrency(delivery.payment_amount).replace('₺', '').trim(),
+    'TR00 0000 0000 0000 0000 0000 00'
+  );
+
+  console.log('MESAJ:', message);
+  console.log('İLK KARAKTER KODU:', message.codePointAt(0).toString(16)); // 2705 çıkmalı
+
+  openWhatsApp(phone, message);
+};
 
   const sendWhatsAppToStudent = (delivery) => {
     if (!delivery.student_phone) {
@@ -202,23 +208,25 @@ export const AdminDeliveriesPage = () => {
   };
 
   const handleViewDetails = async (deliveryId) => {
-    try {
-      const response = await deliveryService.getDeliveryDetail(deliveryId);
-      const deliveryData = response.data.data || response.data;
-      
-      const transformedData = {
-        ...deliveryData,
-        student_name: deliveryData.student_first_name && deliveryData.student_last_name
-          ? `${deliveryData.student_first_name} ${deliveryData.student_last_name}`
-          : null
-      };
-      
-      setSelectedDelivery(transformedData);
-      setShowDetailModal(true);
-    } catch (err) {
-      showStatus('error', 'Hata', err.response?.data?.message || 'Detay yüklenemedi');
-    }
-  };
+  try {
+    const response = await deliveryService.getDeliveryDetail(deliveryId);
+    const deliveryData = response.data.data || response.data;
+    
+    console.log('DELIVERY DATA:', deliveryData); // 👈 BUNU EKLE
+
+    const transformedData = {
+      ...deliveryData,
+      student_name: deliveryData.student_first_name && deliveryData.student_last_name
+        ? `${deliveryData.student_first_name} ${deliveryData.student_last_name}`
+        : null
+    };
+    
+    setSelectedDelivery(transformedData);
+    setShowDetailModal(true);
+  } catch (err) {
+    showStatus('error', 'Hata', err.response?.data?.message || 'Detay yüklenemedi');
+  }
+};
 
   // 1. Gönderici Ödemesi Onayı
   const handleMarkAsPaid = (deliveryId) => {
@@ -514,11 +522,32 @@ export const AdminDeliveriesPage = () => {
                              {formatCurrency(delivery.payment_amount)}
                         </td>
                         <td className="px-6 py-4 text-xs">
-                            <div className="flex flex-col gap-1">
-                                <span className="text-gray-500">G: <span className="text-gray-900 font-medium">{delivery.sender_email}</span></span>
-                                <span className="text-gray-500">K: <span className="text-blue-600 font-medium">{delivery.student_name || '-'}</span></span>
-                            </div>
-                        </td>
+  <div className="flex flex-col gap-1.5">
+    {/* Gönderici */}
+    <div className="flex flex-col">
+      <span className="text-gray-500">
+        G: <span className="text-gray-900 font-medium">
+          {delivery.is_guest
+            ? `${delivery.guest_name} (misafir)`
+            : (delivery.pickup_contact_name || '-')}
+        </span>
+      </span>
+      <span className="text-gray-400">
+        {delivery.is_guest ? delivery.guest_phone : delivery.sender_phone}
+      </span>
+    </div>
+
+    {/* Kurye */}
+    <div className="flex flex-col">
+      <span className="text-gray-500">
+        K: <span className="text-blue-600 font-medium">{delivery.student_name || '-'}</span>
+      </span>
+      {delivery.student_phone && (
+        <span className="text-gray-400">{delivery.student_phone}</span>
+      )}
+    </div>
+  </div>
+</td>
                         <td className="px-6 py-4">
                             {getStatusBadge(delivery.status)}
                         </td>
@@ -567,43 +596,79 @@ export const AdminDeliveriesPage = () => {
                  </div>
 
                  {/* Visual Timeline Route */}
-                 <div className="relative pl-6 border-l-2 border-dashed border-gray-200 ml-3 space-y-8 mb-8">
-                     {/* Alış */}
-                     <div className="relative">
-                         <span className="absolute -left-[31px] top-1 w-4 h-4 bg-white border-4 border-yellow-500 rounded-full"></span>
-                         <div className="bg-white border border-gray-200 p-4 rounded-xl shadow-sm">
-                             <p className="text-xs font-bold text-gray-400 uppercase mb-1">Alış Noktası</p>
-                             <p className="font-bold text-gray-900 text-lg">{selectedDelivery.pickup_district}</p>
-                             <p className="text-sm text-gray-600 mb-2">{selectedDelivery.pickup_address}</p>
-                             <div className="flex items-center gap-3 text-xs text-gray-500 border-t border-gray-100 pt-2">
-                                <span className="flex items-center gap-1"><BiUser/> {selectedDelivery.pickup_contact_name}</span>
-                                <span className="flex items-center gap-1"><BiPhone/> {selectedDelivery.pickup_contact_phone}</span>
-                             </div>
-                         </div>
-                     </div>
-                     
-                     {/* Teslim */}
-                     <div className="relative">
-                         <span className="absolute -left-[31px] top-1 w-4 h-4 bg-gray-900 rounded-full"></span>
-                         <div className="bg-white border border-gray-200 p-4 rounded-xl shadow-sm">
-                             <p className="text-xs font-bold text-gray-400 uppercase mb-1">Teslim Noktası</p>
-                             <p className="font-bold text-gray-900 text-lg">{selectedDelivery.delivery_district}</p>
-                             <p className="text-sm text-gray-600 mb-2">{selectedDelivery.delivery_address}</p>
-                             <div className="flex items-center gap-3 text-xs text-gray-500 border-t border-gray-100 pt-2">
-                                <span className="flex items-center gap-1"><BiUser/> {selectedDelivery.delivery_contact_name}</span>
-                                <span className="flex items-center gap-1"><BiPhone/> {selectedDelivery.delivery_contact_phone}</span>
-                             </div>
-                         </div>
-                     </div>
-                 </div>
+                {/* Visual Timeline Route */}
+<div className="relative pl-6 border-l-2 border-dashed border-gray-200 ml-3 space-y-8 mb-8">
+  {/* Alış */}
+  <div className="relative">
+    <span className="absolute -left-[31px] top-1 w-4 h-4 bg-white border-4 border-yellow-500 rounded-full"></span>
+    <div className="bg-white border border-gray-200 p-4 rounded-xl shadow-sm">
+      <p className="text-xs font-bold text-gray-400 uppercase mb-1">Alış Noktası</p>
+      <p className="font-bold text-gray-900 text-lg">{selectedDelivery.pickup_district}</p>
+      <p className="text-sm text-gray-600 mb-2">{selectedDelivery.pickup_address}</p>
+      <div className="flex items-center gap-3 text-xs text-gray-500 border-t border-gray-100 pt-2">
+        <span className="flex items-center gap-1"><BiUser/> {selectedDelivery.pickup_contact_name}</span>
+        <span className="flex items-center gap-1"><BiPhone/> {selectedDelivery.pickup_contact_phone}</span>
+      </div>
+      {selectedDelivery.pickup_notes && (
+        <div className="mt-2 pt-2 border-t border-gray-100">
+          <p className="text-xs font-bold text-gray-400 uppercase mb-1">Alış Notu</p>
+          <p className="text-sm text-gray-700">{selectedDelivery.pickup_notes}</p>
+        </div>
+      )}
+    </div>
+  </div>
+
+  {/* Teslim */}
+  <div className="relative">
+    <span className="absolute -left-[31px] top-1 w-4 h-4 bg-gray-900 rounded-full"></span>
+    <div className="bg-white border border-gray-200 p-4 rounded-xl shadow-sm">
+      <p className="text-xs font-bold text-gray-400 uppercase mb-1">Teslim Noktası</p>
+      <p className="font-bold text-gray-900 text-lg">{selectedDelivery.delivery_district}</p>
+      <p className="text-sm text-gray-600 mb-2">{selectedDelivery.delivery_address}</p>
+      <div className="flex items-center gap-3 text-xs text-gray-500 border-t border-gray-100 pt-2">
+        <span className="flex items-center gap-1"><BiUser/> {selectedDelivery.delivery_contact_name}</span>
+        <span className="flex items-center gap-1"><BiPhone/> {selectedDelivery.delivery_contact_phone}</span>
+      </div>
+      {selectedDelivery.delivery_notes && (
+        <div className="mt-2 pt-2 border-t border-gray-100">
+          <p className="text-xs font-bold text-gray-400 uppercase mb-1">Teslim Notu</p>
+          <p className="text-sm text-gray-700">{selectedDelivery.delivery_notes}</p>
+        </div>
+      )}
+    </div>
+  </div>
+</div>
+
+{/* Paket Bilgisi */}
+{(selectedDelivery.package_description || selectedDelivery.package_size) && (
+  <div className="bg-gray-50 border border-gray-100 p-4 rounded-2xl mb-8">
+    <p className="text-xs font-bold text-gray-400 uppercase mb-2 flex items-center gap-1">
+      <BiPackage /> Paket Bilgisi
+    </p>
+    {selectedDelivery.package_size && (
+      <p className="text-sm text-gray-700 mb-1"><span className="font-bold">Boyut:</span> {selectedDelivery.package_size}</p>
+    )}
+    {selectedDelivery.package_description && (
+      <p className="text-sm text-gray-700">{selectedDelivery.package_description}</p>
+    )}
+  </div>
+)}
 
                  {/* Kişiler */}
                  <div className="grid grid-cols-2 gap-4 mb-8">
-                     <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                         <p className="text-xs font-bold text-blue-500 uppercase mb-2">Gönderici</p>
-                         <p className="text-sm font-bold text-gray-900">{selectedDelivery.sender_email || '-'}</p>
-                         <p className="text-xs text-gray-500">{selectedDelivery.sender_phone}</p>
-                     </div>
+                    <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
+  <p className="text-xs font-bold text-blue-500 uppercase mb-2">
+    Gönderici {Boolean(selectedDelivery.is_guest) && (
+      <span className="text-blue-400 normal-case">(Misafir)</span>
+    )}
+  </p>
+  <p className="text-sm font-bold text-gray-900">
+    {selectedDelivery.is_guest ? selectedDelivery.guest_name : (selectedDelivery.sender_email || '-')}
+  </p>
+  <p className="text-xs text-gray-500">
+    {selectedDelivery.is_guest ? selectedDelivery.guest_phone : selectedDelivery.sender_phone}
+  </p>
+</div>
                      <div className="p-4 bg-purple-50 rounded-2xl border border-purple-100">
                          <p className="text-xs font-bold text-purple-500 uppercase mb-2">Kurye</p>
                          <p className="text-sm font-bold text-gray-900">{selectedDelivery.student_name || 'Atanmadı'}</p>

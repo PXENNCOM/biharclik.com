@@ -257,7 +257,7 @@ export const HeroSection = () => (
                 Kurye Olarak Başla
               </Link>
               <Link
-                to="/hizli-gonderi"
+                to="/hesap-olustur/gonderici"
                 className="h-14 px-8 rounded-full border border-gray-200 text-gray-900 text-xs font-black flex items-center justify-center hover:bg-gray-50 transition-all bg-white/70"
                 style={{ backdropFilter: 'blur(8px)' }}
               >

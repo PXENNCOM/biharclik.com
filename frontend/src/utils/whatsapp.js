@@ -27,7 +27,10 @@ export const createWhatsAppLink = (phone, message) => {
   }
   
   const encodedMessage = encodeURIComponent(message);
-  return `https://wa.me/${formattedPhone}?text=${encodedMessage}`;
+  const link = `https://wa.me/${formattedPhone}?text=${encodedMessage}`;
+  
+  
+  return link;
 };
 
 export const openWhatsApp = (phone, message) => {
@@ -44,40 +47,39 @@ export const openWhatsApp = (phone, message) => {
 
 export const WhatsAppTemplates = {
   // Göndericiye: Kurye bulundu
-  SENDER_COURIER_ASSIGNED: (orderNumber, courierName, amount, iban) => `
-🎉 *Müjde! Kuryeniz Bulundu!*
+    SENDER_COURIER_ASSIGNED: (orderNumber, courierName, university, department, amount, iban) => `
+*${orderNumber} numaralı siparişiniz onaylandı!*
 
-📦 *Sipariş No:* ${orderNumber}
-👤 *Kurye:* ${courierName}
-💰 *Ödeme Tutarı:* ${amount} TL
+Kuryeniz *${courierName}*, ${university} ${department} bölümü öğrencisidir. Tüm kuryelerimiz doğrulanmış öğrencilerden oluşuyor.
 
-📌 *Ödeme Bilgileri:*
-IBAN: ${iban}
-Alıcı: Yaya Kurye Sistemi
+Ödeme gerçekleştiği anda öğrencimiz yola çıkacaktır, şu an sizi bekliyor.
 
-✅ Ödemenizi yaptıktan sonra lütfen bize bildirin. Onay sonrası kuryeniz yola çıkacaktır.
+*Ödeme için IBAN:* ${iban}
+*Tutar:* ${amount} TL
 
-_Yaya Kurye - Güvenli Teslimat_ 🚀
-  `.trim(),
-
+biharclik.com
+`.trim(),
   // Öğrenciye: Ödeme alındı
-  STUDENT_PAYMENT_RECEIVED: (orderNumber, pickupDistrict, deliveryDistrict, amount) => `
-✅ *Ödeme Alındı! Yola Çıkabilirsin!*
+  STUDENT_PAYMENT_RECEIVED: (orderNumber, pickupDistrict, pickupAddress, pickupNotes, deliveryDistrict, deliveryAddress, deliveryNotes, amount) => `
+*Ödeme alındı, yola çıkabilirsin!*
 
-📦 *Sipariş No:* ${orderNumber}
-📍 *Nereden:* ${pickupDistrict}
-📍 *Nereye:* ${deliveryDistrict}
-💰 *Kazancın:* ${amount} TL
+*Sipariş No:* ${orderNumber}
+*Kazancın:* ${amount} TL
 
-🚀 *Şimdi ne yapmalısın?*
-1️⃣ Uygulamaya gir
-2️⃣ "İşe Başla" butonuna bas
-3️⃣ Paketi al ve teslim et
+*Alış Noktası (${pickupDistrict})*
+${pickupAddress}
+${pickupNotes ? `Not: ${pickupNotes}` : ''}
 
-İyi yolculuklar! 🎒
+*Teslim Noktası (${deliveryDistrict})*
+${deliveryAddress}
+${deliveryNotes ? `Not: ${deliveryNotes}` : ''}
 
-_Yaya Kurye - Güvenli Teslimat_
-  `.trim(),
+Uygulamadan "İşe Başla" butonuna basmayı unutma.
+
+İyi yolculuklar!
+
+biharclik.com
+`.trim(),
 
   // Göndericiye: İş tamamlandı
   SENDER_DELIVERY_COMPLETED: (orderNumber, courierName) => `

@@ -406,9 +406,9 @@ export const CreateShipmentModal = ({ onClose, onSubmit, isLoading }) => {
                                 onChange={handleChange} 
                                 className="w-full bg-gray-800 border-2 border-gray-700 rounded-xl p-3 text-2xl font-black text-white focus:border-green-500 focus:ring-0 placeholder-gray-600" 
                             />
-                            <p className="text-xs text-gray-400 mt-2 text-right">Minimum 100 TL</p>
-                            {formData.payment_amount && parseFloat(formData.payment_amount) < 100 && (
-                                <p className="text-xs text-red-400 mt-1">En az 100 TL olmalı</p>
+                            <p className="text-xs text-gray-400 mt-2 text-right">Minimum 350 TL</p>
+                            {formData.payment_amount && parseFloat(formData.payment_amount) < 350 && (
+                                <p className="text-xs text-red-400 mt-1">En az 350 TL olmalı</p>
                             )}
                          </div>
                     </div>

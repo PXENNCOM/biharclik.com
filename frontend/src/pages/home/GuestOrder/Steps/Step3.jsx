@@ -54,8 +54,5 @@ export const Step3 = ({ data, onChange, errors }) => (
         ))}
       </div>
     </Field>
-    <Field label="Genel Not (İsteğe Bağlı)">
-      <Textarea placeholder="Eklemek istediğiniz herhangi bir bilgi..." value={data.notes} onChange={e => onChange('notes', e.target.value)} rows={2} />
-    </Field>
   </div>
 );

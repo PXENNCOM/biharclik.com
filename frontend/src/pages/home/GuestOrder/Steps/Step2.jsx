@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { BiMapPin, BiUser, BiPhone, BiMap, BiX, BiCheck } from 'react-icons/bi';
-import { ISTANBUL_DISTRICTS, formatPhone, isValidPhone } from '../constants';
+import { BiMapPin, BiUser, BiPhone, BiMap, BiCheck, BiCheckCircle } from 'react-icons/bi';
+import { ISTANBUL_DISTRICTS, formatPhone } from '../constants';
 
 const Field = ({ label, error, children, hint }) => (
   <div className="flex flex-col gap-1.5">
@@ -31,20 +31,33 @@ const Select = ({ icon: Icon, error, children, ...props }) => (
   </div>
 );
 
-const Textarea = ({ error, ...props }) => (
-  <textarea rows={3} className={`w-full px-4 py-3 rounded-2xl border text-sm font-semibold text-gray-900 bg-white outline-none resize-none transition-all placeholder:text-gray-300 ${
-    error ? 'border-red-300 bg-red-50/30' : 'border-gray-100 focus:border-[#FBCF2D] focus:shadow-[0_0_0_3px_rgba(251,207,45,0.12)]'
-  }`} {...props} />
+const AddressField = ({ value, onChange, error, hasLocation, onOpenMap, placeholder }) => (
+  <div className={`relative flex items-center h-12 pl-4 pr-2 rounded-2xl border bg-white transition-all ${
+    error ? 'border-red-300 bg-red-50/30' : 'border-gray-100 focus-within:border-[#FBCF2D] focus-within:shadow-[0_0_0_3px_rgba(251,207,45,0.12)]'
+  }`}>
+    <input
+      className="flex-1 text-sm font-semibold text-gray-900 bg-transparent outline-none placeholder:text-gray-300 pr-2"
+      placeholder={placeholder}
+      value={value}
+      onChange={onChange}
+    />
+    <button
+      type="button"
+      onClick={onOpenMap}
+      title={hasLocation ? 'Konumu değiştir' : 'Haritadan konum seç'}
+      className={`shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
+        hasLocation ? 'bg-green-50 text-green-600' : 'bg-gray-50 text-gray-400 hover:bg-[#FBCF2D]/15 hover:text-gray-700'
+      }`}
+    >
+      {hasLocation ? <BiCheckCircle size={18} /> : <BiMap size={18} />}
+    </button>
+  </div>
 );
 
-const LocationBadge = ({ lat, lng, onClear }) => (
-  <div className="flex items-center justify-between px-4 py-2.5 bg-green-50 border border-green-200 rounded-2xl">
-    <div className="flex items-center gap-2">
-      <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-      <p className="text-[11px] font-bold text-green-700">Konum seçildi — {lat.toFixed(4)}, {lng.toFixed(4)}</p>
-    </div>
-    <button onClick={onClear} className="text-green-500 hover:text-green-700"><BiX size={16} /></button>
-  </div>
+const Textarea = ({ error, ...props }) => (
+  <textarea rows={2} className={`w-full px-4 py-3 rounded-2xl border text-sm font-semibold text-gray-900 bg-white outline-none resize-none transition-all placeholder:text-gray-300 ${
+    error ? 'border-red-300 bg-red-50/30' : 'border-gray-100 focus:border-[#FBCF2D] focus:shadow-[0_0_0_3px_rgba(251,207,45,0.12)]'
+  }`} {...props} />
 );
 
 export const Step2 = ({ data, onChange, errors, onOpenMap }) => {
@@ -57,25 +70,25 @@ export const Step2 = ({ data, onChange, errors, onOpenMap }) => {
     onChange('delivery_contact_phone', checked ? data.pickup_contact_phone : '');
   };
 
+  const hasDeliveryLocation = !!(data.delivery_latitude && data.delivery_longitude);
+
   return (
     <div className="flex flex-col gap-5">
-      <Field label="Teslimat Adresi" error={errors.delivery_address}>
-        <Textarea placeholder="Tam adres (mahalle, sokak, bina no, kat, daire...)" value={data.delivery_address} onChange={e => onChange('delivery_address', e.target.value)} error={errors.delivery_address} />
+      <Field label="Teslimat Adresi" error={errors.delivery_address} hint="Sağdaki ikondan haritadan tam konum işaretleyebilirsiniz">
+        <AddressField
+          placeholder="Sokak, Cadde, Mahalle ya da Site/Plaza bilgisi giriniz"
+          value={data.delivery_address}
+          onChange={e => onChange('delivery_address', e.target.value)}
+          error={errors.delivery_address}
+          hasLocation={hasDeliveryLocation}
+          onOpenMap={() => onOpenMap('delivery')}
+        />
       </Field>
       <Field label="Teslimat İlçesi" error={errors.delivery_district}>
         <Select icon={BiMapPin} value={data.delivery_district} onChange={e => onChange('delivery_district', e.target.value)} error={errors.delivery_district}>
           <option value="">İlçe seçiniz</option>
           {ISTANBUL_DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
         </Select>
-      </Field>
-      <Field label="Harita Konumu (İsteğe Bağlı)">
-        {data.delivery_latitude && data.delivery_longitude ? (
-          <LocationBadge lat={data.delivery_latitude} lng={data.delivery_longitude} onClear={() => { onChange('delivery_latitude', null); onChange('delivery_longitude', null); }} />
-        ) : (
-          <button type="button" onClick={() => onOpenMap('delivery')} className="flex items-center gap-3 h-12 px-4 rounded-2xl border border-dashed border-gray-200 bg-gray-50 text-gray-400 text-[11px] font-black uppercase tracking-wider hover:border-[#FBCF2D] hover:text-gray-700 transition-all w-full">
-            <BiMap size={16} /> Haritadan Konum İşaretle
-          </button>
-        )}
       </Field>
       <Field label="Alıcı Adı" error={errors.delivery_contact_name}>
         <Input icon={BiUser} placeholder="Teslim edilecek kişi" value={data.delivery_contact_name} onChange={e => onChange('delivery_contact_name', e.target.value)} error={errors.delivery_contact_name} />

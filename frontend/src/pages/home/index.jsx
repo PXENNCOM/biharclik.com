@@ -10,6 +10,7 @@ import { HeroSection } from './HeroSection';
 import { Footer }      from './Footer';
 
 import img from '../../assets/img.webp'
+import GuestOrderSection from './GuestOrder';
 
 
 // ── DATA ─────────────────────────────────────────────────────────────────────
@@ -84,6 +85,7 @@ export const HomePage = () => {
     <div className="min-h-screen bg-white font-sans text-gray-900 antialiased selection:bg-[#FBCF2D] selection:text-gray-900">
       <Navbar />
       <HeroSection />
+      <GuestOrderSection />
 
       {/* ── NASIL ÇALIŞIR ── */}
       <section id="nasil-calisir" className="py-16 md:py-32">
@@ -131,7 +133,7 @@ export const HomePage = () => {
 
             <div className="grid grid-cols-2 gap-x-4 gap-y-10 md:gap-x-12 md:gap-y-10">
               {[
-                { icon: <BiCheckDouble />, t: '%18 Hizmet bedeli' },
+                { icon: <BiCheckDouble />, t: '%30 Hizmet bedeli' },
                 { icon: <BiMapAlt />, t: 'Özgür Rota' },
                 { icon: <BiCrown />, t: 'Onaylı Profil' },
                 { icon: <BiTime />, t: '7/24 Destek' },

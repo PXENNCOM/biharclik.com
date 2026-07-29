@@ -19,20 +19,22 @@ class DeliveryService {
   }
 
   static async createGuestDelivery(data) {
-    const orderNumber = await DeliveryQueries.generateOrderNumber();
+  const orderNumber = await DeliveryQueries.generateOrderNumber();
 
-    const deliveryData = {
-      order_number: orderNumber,
-      sender_user_id: null,
-      is_guest: 1,
-      guest_name: data.guest_name,
-      guest_phone: data.guest_phone,
-      ...data
-    };
+  const deliveryData = {
+    order_number: orderNumber,
+    sender_user_id: null,
+    is_guest: 1,
+    guest_name: data.guest_name,
+    guest_phone: data.guest_phone,
+    ...data,
+    pickup_contact_name: data.pickup_contact_name?.trim() || data.guest_name,
+    pickup_contact_phone: data.pickup_contact_phone || data.guest_phone,
+  };
 
-    const deliveryId = await DeliveryQueries.createDelivery(deliveryData);
-    return await DeliveryQueries.findById(deliveryId);
-  }
+  const deliveryId = await DeliveryQueries.createDelivery(deliveryData);
+  return await DeliveryQueries.findById(deliveryId);
+}
 
   // MÜSAİT İŞLER (Sadece Öğrenci)
   static async getAvailableJobs(filters) {

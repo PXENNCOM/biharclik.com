@@ -25,7 +25,8 @@ import {
   BiTimeFive,
   BiMap,
   BiListUl,
-  BiShield
+  BiShield,
+  BiMapPin // 👈 EKLE
 } from 'react-icons/bi';
 
 export const StudentDashboard = () => {
@@ -419,6 +420,19 @@ const EmptyState = ({ icon, message }) => (
   </div>
 );
 
+const getGoogleMapsUrl = (job, type) => {
+  const lat = type === 'pickup' ? job.pickup_latitude : job.delivery_latitude;
+  const lng = type === 'pickup' ? job.pickup_longitude : job.delivery_longitude;
+  const address = type === 'pickup'
+    ? `${job.pickup_address}, ${job.pickup_district}`
+    : `${job.delivery_address}, ${job.delivery_district}`;
+
+  if (lat && lng) {
+    return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+  }
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+};
+
 const JobCard = ({ job, type, onAction, onStart, onComplete, onShowMap, formatCurrency, hasActiveJob }) => {
   const hasLocation = job.pickup_latitude && job.pickup_longitude;
 
@@ -463,18 +477,57 @@ const JobCard = ({ job, type, onAction, onStart, onComplete, onShowMap, formatCu
           <div className="absolute -left-[20px] top-1.5 w-3 h-3 bg-white border-[3px] border-yellow-500 rounded-full shadow-sm z-10"></div>
           <div className="flex flex-col">
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Alış Noktası</span>
-            <span className="text-base font-bold text-gray-900 leading-tight truncate pr-2">{job.pickup_district}</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-base font-bold text-gray-900 leading-tight truncate pr-1">{job.pickup_district}</span>
+              <a
+                href={getGoogleMapsUrl(job, 'pickup')}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="shrink-0 text-blue-500 hover:text-blue-700"
+                title="Google Maps'te aç"
+              >
+                <BiMapPin size={16} />
+              </a>
+            </div>
             <span className="text-xs text-gray-500 mt-0.5 line-clamp-1">{job.pickup_address}</span>
+            {job.pickup_notes && (
+              <span
+                title={job.pickup_notes}
+                className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-2 py-1 mt-1.5 inline-block w-fit max-w-full truncate"
+              >
+                Not: {job.pickup_notes}
+              </span>
+            )}
           </div>
         </div>
         {/* Teslimat */}
         <div className="relative">
           <div className="absolute -left-[20px] top-1.5 w-3 h-3 bg-gray-900 rounded-full shadow-sm z-10"></div>
           <div className="flex flex-col">
-            {/* DÜZENLENDİ: Yazı boyutları büyütüldü */}
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Teslimat</span>
-            <span className="text-lg font-bold text-gray-900 leading-tight truncate pr-2">{job.delivery_district}</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-lg font-bold text-gray-900 leading-tight truncate pr-1">{job.delivery_district}</span>
+              <a
+                href={getGoogleMapsUrl(job, 'delivery')}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="shrink-0 text-blue-500 hover:text-blue-700"
+                title="Google Maps'te aç"
+              >
+                <BiMapPin size={16} />
+              </a>
+            </div>
             <span className="text-sm text-gray-600 mt-0.5 leading-snug line-clamp-2">{job.delivery_address}</span>
+            {job.delivery_notes && (
+              <span
+                title={job.delivery_notes}
+                className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-2 py-1 mt-1.5 inline-block w-fit max-w-full truncate"
+              >
+                Not: {job.delivery_notes}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -487,9 +540,13 @@ const JobCard = ({ job, type, onAction, onStart, onComplete, onShowMap, formatCu
         </div>
 
         {type === 'available' && (
-          <div className="grid grid-cols-[auto_1fr] gap-2">
+          <div className={hasLocation ? "grid grid-cols-[auto_1fr] gap-2" : "w-full"}>
             {hasLocation && (
-              <button onClick={onShowMap} disabled={hasActiveJob} className={`px-4 py-3 rounded-xl flex items-center justify-center ${hasActiveJob ? 'bg-gray-100 text-gray-400' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}`}>
+              <button
+                onClick={onShowMap}
+                disabled={hasActiveJob}
+                className={`px-4 py-3 rounded-xl flex items-center justify-center ${hasActiveJob ? 'bg-gray-100 text-gray-400' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}`}
+              >
                 <BiMap size={20} />
               </button>
             )}

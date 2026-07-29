@@ -55,8 +55,10 @@ class AuthValidator {
       'any.required': 'Üniversite bilgisi zorunludur'
     }),
     // GÜNCELLENEN KISIM: Artık bir ID (sayı) bekliyoruz
-    department_id: Joi.number().integer().positive().required().messages({
-      'number.base': 'Bölüm bilgisi geçersiz formatta',
+    department_id: Joi.alternatives().try(
+      Joi.number().integer().positive(),
+      Joi.string().pattern(/^[0-9]+$/)
+    ).required().messages({
       'any.required': 'Bölüm seçimi zorunludur'
     }),
     kvkk_accepted: Joi.boolean().valid(true).required().messages({
@@ -74,19 +76,19 @@ class AuthValidator {
       'any.required': 'E-posta adresi zorunludur'
     }),
     phone: Joi.string()
-  .custom((value, helpers) => {
-    const cleaned = value.replace(/[\s\-().]/g, '');
-    const normalized = cleaned.startsWith('5') ? '0' + cleaned : cleaned;
-    if (!/^05[0-9]{9}$/.test(normalized)) {
-      return helpers.error('any.invalid');
-    }
-    return normalized; 
-  })
-  .required()
-  .messages({
-    'any.invalid': 'Geçerli bir telefon numarası giriniz',
-    'any.required': 'Telefon numarası zorunludur'
-  }),
+      .custom((value, helpers) => {
+        const cleaned = value.replace(/[\s\-().]/g, '');
+        const normalized = cleaned.startsWith('5') ? '0' + cleaned : cleaned;
+        if (!/^05[0-9]{9}$/.test(normalized)) {
+          return helpers.error('any.invalid');
+        }
+        return normalized;
+      })
+      .required()
+      .messages({
+        'any.invalid': 'Geçerli bir telefon numarası giriniz',
+        'any.required': 'Telefon numarası zorunludur'
+      }),
     password: Joi.string().min(6).required().messages({
       'string.min': 'Şifre en az 6 karakter olmalıdır',
       'any.required': 'Şifre zorunludur'

@@ -41,15 +41,6 @@ export const Footer = () => (
       </p>
     </div>
 
-    {/* Güvenli Ödeme Logoları (iyzico & Kartlar) */}
-    <div className="w-full max-w-md flex justify-center items-center opacity-100">
-      <img 
-        src="/logo_band_colored@3x.png" 
-        alt="Güvenli Ödeme Yöntemleri" 
-        className="h-6 md:h-7 w-auto object-contain"
-      />
-    </div>
-
     {/* Alt Süsleme: Metro Hattı İzlenimi */}
     <div className="mt-6 flex gap-1.5">
       <div className="w-1.5 h-1.5 rounded-full bg-gray-100" />
