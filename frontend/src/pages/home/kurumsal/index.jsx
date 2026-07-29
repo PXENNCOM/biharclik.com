@@ -3,6 +3,8 @@ import { useLocation } from 'react-router-dom';
 import { Navbar } from '../Navbar';
 import { HeroSection } from '../HeroSection';
 import { Footer } from '../Footer';
+import { WhatsAppButton } from '../../../components/common/WhatsAppButton';
+
 
 export const KurumsalPage = () => {
   const [activeTab, setActiveTab] = useState('hakkimizda');
@@ -33,6 +35,7 @@ export const KurumsalPage = () => {
       {/* ÜST BİLEŞENLER */}
       <Navbar />
       <HeroSection />
+      <WhatsAppButton />
 
       {/* ORTA KURUMSAL ALAN */}
       <div className="w-full flex-1 py-16 px-4 md:px-16 lg:px-44 text-gray-800 flex flex-col items-start">
@@ -308,39 +311,29 @@ export const KurumsalPage = () => {
               </section>
             )}
 
-            {/* 5. İLETİŞİM TABI */}
-            {activeTab === 'iletisim' && (
-              <section className="space-y-6">
-                <h2 className="text-base font-bold text-gray-900 uppercase tracking-wide border-b border-gray-50 pb-2">İLETİŞİM BİLGİLERİ</h2>
-                <p>Bizimle her türlü soru, görüş, öneri veya iş birliği talepleriniz için aşağıdaki kanallar üzerinden doğrudan iletişime geçebilirsiniz. Destek ekibimiz en kısa sürede size dönüş sağlayacaktır.</p>
+           <div className="space-y-1">
+  <h3 className="font-bold text-gray-900">E-Posta Adresi</h3>
+  <p className="text-gray-600 hover:text-gray-900 transition-colors">
+    <a href="mailto:info@biharclik.com">info@biharclik.com</a>
+  </p>
+</div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-                  <div className="space-y-1">
-                    <h3 className="font-bold text-gray-900">E-Posta Adresi</h3>
-                    <p className="text-gray-600 hover:text-gray-900 transition-colors">
-                      <a href="mailto:info@biharclik.com">info@biharclik.com</a>
-                    </p>
-                  </div>
+<div className="space-y-1">
+  <h3 className="font-bold text-gray-900">Telefon</h3>
+  <p className="text-gray-600 hover:text-gray-900 transition-colors">
+    <a href="tel:+905534126034">0553 412 60 34</a>
+  </p>
+</div>
 
-                  <div className="space-y-1">
-                    <h3 className="font-bold text-gray-900">Çalışma Saatleri</h3>
-                    <p className="text-gray-600">Pazartesi — Pazar: 09:00 - 22:00</p>
-                  </div>
+<div className="space-y-1">
+  <h3 className="font-bold text-gray-900">Çalışma Saatleri</h3>
+  <p className="text-gray-600">Pazartesi — Pazar: 09:00 - 22:00</p>
+</div>
 
-                  <div className="space-y-1 md:col-span-2">
-                    <h3 className="font-bold text-gray-900">Kurumsal Adres</h3>
-                    <p className="text-gray-600">YAVUZTÜRK MAH. SÜTÇÜYOLU SK. NO: 40 İÇ KAPI NO: 4 YOK/ ÜSKÜDAR/ İSTANBUL</p>
-                  </div>
-                </div>
-
-                <div className="pt-6 border-t border-gray-100">
-                  <p className="text-xs text-gray-400">
-                    * Platform içi aktif teslimat süreçleriyle veya kurye görevleriyle ilgili acil durumlar için kullanıcı panelinizde yer alan "Destek" bölümünü kullanmanızı öneririz.
-                  </p>
-                </div>
-              </section>
-            )}
-
+<div className="space-y-1 md:col-span-2">
+  <h3 className="font-bold text-gray-900">Kurumsal Adres</h3>
+  <p className="text-gray-600">YAVUZTÜRK MAH. SÜTÇÜYOLU SK. NO: 40 İÇ KAPI NO: 4 YOK/ ÜSKÜDAR/ İSTANBUL</p>
+</div>
           </main>
         </div>
       </div>

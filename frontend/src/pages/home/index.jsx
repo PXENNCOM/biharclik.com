@@ -12,6 +12,9 @@ import { Footer }      from './Footer';
 import img from '../../assets/img.webp'
 import GuestOrderSection from './GuestOrder';
 
+import { WhatsAppButton } from '../../components/common/WhatsAppButton';
+
+
 
 // ── DATA ─────────────────────────────────────────────────────────────────────
 
@@ -36,14 +39,13 @@ const FAQS = [
   },
   { 
     q: 'Hangi ürünler gönderilemez?', 
-    a: 'Uyuşturucu ve uyarıcı maddeler, ateşli silah ve mühimmat, kaçak/sahte ürünler, nakit para ve değerli kıymetler, alkol-tütün ürünleri, canlı hayvanlar ve tehlikeli/yanıcı maddeler platform üzerinden gönderilemez. Gönderici, paket içeriğini doğru beyan etmekle yükümlüdür.' 
+    a: 'Kaçak/sahte ürünler, nakit para ve değerli kıymetler, canlı hayvanlar, tehlikeli/yanıcı maddeler ile T.C. mevzuatına göre taşınması, satışı veya bulundurulması yasak olan her türlü ürün platform üzerinden gönderilemez. Gönderici, paket içeriğini doğru beyan etmekle yükümlüdür.' 
   },
   { 
     q: 'Şüpheli görünen bir paketi teslim almak zorunda mıyım?', 
     a: 'Hayır. İçeriği beyan ile uyuşmayan, şüpheli görünen veya yasaklı ürün listesine giren bir paketi kurye reddedebilir ve durumu platforma bildirebilir.' 
   },
   { q: 'Kurye olmak için ne gerekiyor?', a: 'Aktif bir üniversite öğrencisi olman yeterli. Kimlik ve öğrenci belgesi onayı sonrası başlayabilirsin.' },
-  { q: 'Ne kadar kazanabilirim?', a: 'Teslimat başına minimum 350₺ kazanç elde edersin. Ücreti gönderici belirler.' },
   { q: 'Hangi saatlerde çalışabilirim?', a: 'Tamamen özgürsün. Dersine veya rotana uyan her an ilan alabilirsin.' },
   { q: 'Sadece İstanbul mu?', a: 'Şu an sadece İstanbul içi metro ve metrobüs ağında aktifiz.' },
 ];
@@ -83,6 +85,7 @@ export const HomePage = () => {
 
   return (
     <div className="min-h-screen bg-white font-sans text-gray-900 antialiased selection:bg-[#FBCF2D] selection:text-gray-900">
+      <WhatsAppButton />
       <Navbar />
       <HeroSection />
       <GuestOrderSection />
@@ -133,7 +136,7 @@ export const HomePage = () => {
 
             <div className="grid grid-cols-2 gap-x-4 gap-y-10 md:gap-x-12 md:gap-y-10">
               {[
-                { icon: <BiCheckDouble />, t: '%30 Hizmet bedeli' },
+                { icon: <BiCheckDouble />, t: '%45  Vergi ve Hizmet bedeli' },
                 { icon: <BiMapAlt />, t: 'Özgür Rota' },
                 { icon: <BiCrown />, t: 'Onaylı Profil' },
                 { icon: <BiTime />, t: '7/24 Destek' },
